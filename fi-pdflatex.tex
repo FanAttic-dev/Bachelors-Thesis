@@ -1,0 +1,122 @@
+\documentclass[
+  digital, %% This option enables the default options for the
+           %% digital version of a document. Replace with `printed`
+           %% to enable the default options for the printed version
+           %% of a document.
+  twoside, %% This option enables double-sided typesetting. Use at
+           %% least 120 g/m² paper to prevent show-through. Replace
+           %% with `oneside` to use one-sided typesetting; use only
+           %% if you don’t have access to a double-sided printer,
+           %% or if one-sided typesetting is a formal requirement
+           %% at your faculty.
+  table,   %% This option causes the coloring of tables. Replace
+           %% with `notable` to restore plain LaTeX tables.
+  nolof,     %% This option prints the List of Figures. Replace with
+           %% `nolof` to hide the List of Figures.
+  nolot,     %% This option prints the List of Tables. Replace with
+           %% `nolot` to hide the List of Tables.
+  %% More options are listed in the user guide at
+  %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
+]{fithesis3}
+%% The following section sets up the locales used in the thesis.
+\usepackage[resetfonts]{cmap} %% We need to load the T2A font encoding
+\usepackage[T1,T2A]{fontenc}  %% to use the Cyrillic fonts with Russian texts.
+\usepackage[
+  main=english, %% By using `czech` or `slovak` as the main locale
+                %% instead of `english`, you can typeset the thesis
+                %% in either Czech or Slovak, respectively.
+  english, german, russian, czech, slovak %% The additional keys allow
+]{babel}
+%% The following section sets up the metadata of the thesis.
+\thesissetup{
+    date          = \the\year/\the\month/\the\day,
+    university    = mu,
+    faculty       = fi,
+    type          = bc,
+    author        = Attila Zsíros,
+    gender        = m,
+    advisor       = Mgr. Jan Čejka,
+    title         = {Using Kalman filters for pose estimation of mobile devices in simulated                     underwater environments},
+    TeXtitle      = {Using Kalman filters for pose estimation of mobile devices in simulated                     underwater environments},
+    keywords      = {Augmented reality, Extended Kalman filter, iMareCulture, Kalman filter,                     Motion tracking, Odometry, Pose estimation},
+    TeXkeywords   = {Augmented reality, Kalman filter, Extended Kalman filter, iMareCulture,                     Motion tracking, Odometry, Pose estimation},
+    abstract      = {This is the abstract of my thesis, which can
+
+                     span multiple paragraphs.},
+    thanks        = {These are the acknowledgements for my thesis, which can
+
+                     span multiple paragraphs.},
+    bib           = example.bib,
+}
+\usepackage{makeidx}      %% The `makeidx` package contains
+\makeindex                %% helper commands for index typesetting.
+%% These additional packages are used within the document:
+\usepackage{paralist} %% Compact list environments
+\usepackage{amsmath}  %% Mathematics
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{url}      %% Hyperlinks
+\usepackage{markdown} %% Lightweight markup
+\usepackage{listings} %% Source code highlighting
+\lstset{
+  basicstyle      = \ttfamily,%
+  identifierstyle = \color{black},%
+  keywordstyle    = \color{blue},%
+  keywordstyle    = {[2]\color{cyan}},%
+  keywordstyle    = {[3]\color{olive}},%
+  stringstyle     = \color{teal},%
+  commentstyle    = \itshape\color{magenta}}
+\usepackage{floatrow} %% Putting captions above tables
+\floatsetup[table]{capposition=top}
+\begin{document}
+\chapter*{Introduction}
+    \addcontentsline{toc}{chapter}{Introduction}
+
+    My introduction goes here \ldots
+
+\chapter{Theory}
+    \section{Kalman filter}
+    Some stuff about KF. \cite{borgman03}
+    \begin{enumerate}
+        \item What
+        \item Why
+    \end{enumerate}
+    
+    \section{Extended Kalman filter}
+    \begin{enumerate}
+        \item Derivation from KF for non-linear cases
+        \item How does it work
+    \end{enumerate}
+    
+    \section{Markers}
+    
+    \section{Motion dynamics}
+    
+    \section{Examples}
+
+\chapter{Related works}
+    \begin{itemize}
+        \item What do they use and how
+        \item Why is it good or bad
+    \end{itemize}
+
+\chapter{Our method}
+    \section{RCARS}
+    \section{Our model}
+
+\chapter{Experiment}
+    \section{Conditions}
+        \subsection{Underwater environment}
+        \subsection{Hardware}
+            \begin{itemize}
+                \item Motion capture
+                \item Smartphone
+                \item Synchronisation
+            \end{itemize}
+    \section{Results}
+    \section{Discussion}
+    
+\chapter{Conclusion}
+
+\printbibliography[heading=bibintoc] %% Print the bibliography.
+\end{document}
