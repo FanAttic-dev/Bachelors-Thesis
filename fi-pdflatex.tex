@@ -71,26 +71,47 @@
 \begin{document}
 \chapter*{Introduction}
     \addcontentsline{toc}{chapter}{Introduction}
+    
+    \begin{enumerate}
+        \item Motivation
+        \item Aim
+        \item Research questions
+    \end{enumerate}
 
-    My introduction goes here \ldots
+\chapter{Background}
+    \begin{enumerate}
+        \item Project iMareCulture
+        \item Problems with underwater environments
+        \item Why is using existing tools such as ARCore and Vuforia not suitable?
+    \end{enumerate}
 
 \chapter{Theory}
-    \section{Kalman filter}
-    Some stuff about KF. \cite{borgman03}
-    \begin{enumerate}
-        \item What
-        \item Why
-    \end{enumerate}
+    \section{Augmented reality}
     
-    \section{Extended Kalman filter}
-    \begin{enumerate}
-        \item Derivation from KF for non-linear cases
-        \item How does it work
-    \end{enumerate}
+    \section{Pose estimation}
     
-    \section{Markers}
+    \section{Kalman filters}
+        \subsection{General KF}
+            \begin{enumerate}
+                \item Motivation, background, advantages
+                \item Definition
+                \item Describe the cycle
+                \item My examples
+            \end{enumerate}
     
-    \section{Motion dynamics}
+        \subsection{Extended Kalman filter}
+        \begin{enumerate}
+            \item Derivation from KF for non-linear cases
+            \item What is the difference
+        \end{enumerate}
+        
+    \section{Sensors}
+        \begin{enumerate}
+            \item IMU
+        \end{enumerate}
+    
+    \section{Fiducials}
+        ARUco, AprilTags, OpenCV
     
     \section{Examples}
 
@@ -100,23 +121,39 @@
         \item Why is it good or bad
     \end{itemize}
 
-\chapter{Our method}
+\chapter{Method}
+    \section{Pre-study}
+        \begin{itemize}
+            \item Comprised a literature study to gather the resources that were required
+            \item Highest priority - Pose estimation, Kalman filtering, fiducials
+            \item Google Scholar
+        \end{itemize}
+    \section{Honza's model}
     \section{RCARS}
-    \section{Our model}
-
-\chapter{Experiment}
-    \section{Conditions}
-        \subsection{Underwater environment}
+    \section{Testing conditions}
+        \subsection{Simulating underwater environment}
         \subsection{Hardware}
             \begin{itemize}
                 \item Motion capture
                 \item Smartphone
                 \item Synchronisation
             \end{itemize}
+
+\chapter{Results}
+    \section{Datasets}
+        \begin{itemize}
+            \item One marker
+            \item More markers
+            \item Deleting tags based on the distance
+            \item Deleting tags based on noise
+        \end{itemize}
+
+\chapter{Discussion}
     \section{Results}
-    \section{Discussion}
+    \section{The work in a wider context}
     
 \chapter{Conclusion}
+    \section{Future work}
 
 \printbibliography[heading=bibintoc] %% Print the bibliography.
 \end{document}
