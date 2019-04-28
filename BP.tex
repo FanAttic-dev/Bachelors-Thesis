@@ -113,7 +113,7 @@
     
     The tracking problem gets even more complex in underwater environments, where the system has to be waterproof, has to withstand the high pressure of diving depth, cannot rely on GPS, and the captured images suffer from turbidity effects caused by the medium.
     
-    Furthermore, the amount and cost of sensors packed in smartphones are much more limited than in specialized devices used in for example robotics \cite{vi-sensor}. As a consequence, the measurements are noisier and biased. Tracking techniques tackle these problems by integrating several sensors with complementary characteristics into a sensor fusion filter. In this chapter, an overview of the pose estimation techniques is given with an emphasis on underwater use.
+    Furthermore, the amount and cost of sensors packed in smartphones are much more limited than in specialized devices used in for example robotics \cite{vi-sensor}. As a consequence, the measurements are noisier and biased. Tracking techniques tackle these problems by integrating several sensors with complementary characteristics into a sensor fusion filter. This chapter provides an overview of the pose estimation techniques and their utilization under water.
 
     \section{Tracking techniques}
         \subsection{Visual tracking}
@@ -171,11 +171,20 @@
 
             If the angular velocity measurements from the gyroscope are integrated to obtain the orientation, the errors accumulate over time similarly to the accelerometer. Thus, in many attitude estimation solutions, the two sensors are fused because of their complementary characteristics: the gyroscope is accurate for quick movement in short periods of time, and the accelerometer determining the gravitation vector in longer periods of time \cite{99Luinge}. Fusing gyroscopes and accelerometers allows determining pitch and roll axes.
             
-        \subsection{Visual-inertial tracking}
+        \subsection{Hybrid tracking}
+        Hybrid tracking is a promising alternative to tracking techniques. It combines multiple sensors to build more robust and accurate tracking systems. This sensor fusion exhibits the virtues of both technologies and compensates for their respective drawbacks \cite{99SoYou}.
+
+        Visual-inertial tracking takes advantage of the complementary properties of visual and inertial sensors \cite{16Palonen}. On the one hand, the drawbacks of vision tracking, i.e., low-frequency, line-of-sight requirement, and slow motions due to motion blur, are compensated by the advantages of the IMU, i.e., high-frequency measurements from the IMU, occlusion immunity, and high accuracy in cases of rapid directional changes or high rotational speed. On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
         
+        Several approaches are tackling the visual-inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
+        \begin{itemize}
+            \item loosely coupled systems - they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
+            \item tightly coupled approaches - they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
+        \end{itemize}
+        This thesis uses recursive filtering by utilizing the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high-precision visual-inertial navigation system and is implemented in most high-accuracy visual-inertial systems estimators \cite{13Leutenegger}.
         
-            
-            
+        \subsection{SLAM}
+    \section{Underwater pose estimation}
             
 \chapter{Kalman filtering}
 
