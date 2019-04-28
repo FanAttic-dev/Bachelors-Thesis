@@ -1,0 +1,191 @@
+\documentclass[
+  digital, %% This option enables the default options for the
+           %% digital version of a document. Replace with `printed`
+           %% to enable the default options for the printed version
+           %% of a document.
+  twoside, %% This option enables double-sided typesetting. Use at
+           %% least 120 g/m² paper to prevent show-through. Replace
+           %% with `oneside` to use one-sided typesetting; use only
+           %% if you don’t have access to a double-sided printer,
+           %% or if one-sided typesetting is a formal requirement
+           %% at your faculty.
+  table,   %% This option causes the coloring of tables. Replace
+           %% with `notable` to restore plain LaTeX tables.
+  nolof,     %% This option prints the List of Figures. Replace with
+           %% `nolof` to hide the List of Figures.
+  nolot,     %% This option prints the List of Tables. Replace with
+           %% `nolot` to hide the List of Tables.
+  %% More options are listed in the user guide at
+  %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
+]{fithesis3}
+%% The following section sets up the locales used in the thesis.
+\usepackage[resetfonts]{cmap} %% We need to load the T2A font encoding
+\usepackage[T1,T2A]{fontenc}  %% to use the Cyrillic fonts with Russian texts.
+\usepackage[
+  main=english, %% By using `czech` or `slovak` as the main locale
+                %% instead of `english`, you can typeset the thesis
+                %% in either Czech or Slovak, respectively.
+  english, german, russian, czech, slovak %% The additional keys allow
+]{babel}
+%% The following section sets up the metadata of the thesis.
+\thesissetup{
+    date          = \the\year/\the\month/\the\day,
+    university    = mu,
+    faculty       = fi,
+    type          = bc,
+    author        = Attila Zsíros,
+    gender        = m,
+    advisor       = Mgr. Jan Čejka,
+    title         = {Using Kalman filters for pose estimation of mobile devices in simulated                     underwater environments},
+    TeXtitle      = {Using Kalman filters for pose estimation of mobile devices in simulated                     underwater environments},
+    keywords      = {Augmented reality, Extended Kalman filter, iMareCulture, Kalman filter,                     Motion tracking, Odometry, Pose estimation},
+    TeXkeywords   = {Augmented reality, Kalman filter, Extended Kalman filter, iMareCulture,                     Motion tracking, Odometry, Pose estimation},
+    abstract      = {This is the abstract of my thesis, which can
+
+                     span multiple paragraphs.},
+    thanks        = {These are the acknowledgements for my thesis, which can
+
+                     span multiple paragraphs.},
+    bib           = bibliography.bib,
+}
+\usepackage{makeidx}      %% The `makeidx` package contains
+\makeindex                %% helper commands for index typesetting.
+%% These additional packages are used within the document:
+\usepackage{paralist} %% Compact list environments
+\usepackage{amsmath}  %% Mathematics
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{url}      %% Hyperlinks
+\usepackage{todonotes}
+\usepackage{markdown} %% Lightweight markup
+\usepackage{listings} %% Source code highlighting
+\lstset{
+  basicstyle      = \ttfamily,%
+  identifierstyle = \color{black},%
+  keywordstyle    = \color{blue},%
+  keywordstyle    = {[2]\color{cyan}},%
+  keywordstyle    = {[3]\color{olive}},%
+  stringstyle     = \color{teal},%
+  commentstyle    = \itshape\color{magenta}}
+\usepackage{floatrow} %% Putting captions above tables
+\floatsetup[table]{capposition=top}
+\begin{document}
+\chapter*{Introduction}
+    \addcontentsline{toc}{chapter}{Introduction}
+    The seabed is often called the biggest museum in the world. Thousands of shipwrecks, ancient flooded cities, and other structures form our underwater cultural heritage. Because many of these objects are deprived of their context when exhibited on land, some sites offer \textit{in situ} experience, where scuba divers have the chance to experience them in their original surroundings \cite{unesco}. 
+
+    Immersive technologies are extensively used at such archaeological sites since they can present information connected to user's location, e.g., historical facts, visual navigation, or even provide an augmented reality view of the original state of the structure. A European Union project, named iMareCulture\footnote{https://imareculture.eu/}, is concerned about developing such applications. One branch of the project, which this thesis is a part of, aims at implementing virtual visits in augmented reality.
+    
+    As defined in \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real-time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
+    
+    \begin{itemize}
+      \item Vision-based methods provide high accuracy but slow update rates and require line-of-sight between the camera and the markers;
+      \item Inertial tracking, performed by the sensors from the inertial sensor unit (IMU), provides high-frequency measurements but is unreliable to track position for long periods of time due to problems with sensor bias and drift.
+    \end{itemize}
+    
+    The goal of this thesis is the fusion of these two complementary approaches to get more accurate pose estimations than by using any of them alone. It extends an existing prototype of a vision-based AR application for Android phones and tablets. The application uses methods from ArUco library\footnote{ArUco is an OpenSource library for camera pose estimation using squared markers. \url{https://www.uco.es/investiga/grupos/ava/node/26}} with 2D barcode markers, detected by the camera, that are to be distributed in the archaeological site. For sensor fusion, a common data fusion algorithm that combines and smooths the measured values -- the Kalman filter -- is utilized.
+    
+    The first chapter discusses the available AR platforms with references to related works. The next two chapters introduce the theoretical background of the tracking methods, the relations between the coordinate frames, and the Kalman filtering.
+    
+    The fourth chapter is about experiments. Firstly, it presents the technical equipment and testing conditions. Secondly, it shows the Kalman filter performance from more straightforward cases (only a single marker with accelerometer) to the complex ones, when all IMU sensors along with multiple markers are involved. Successively, motion tracking is used as ground-truth, and several non-linear variants, such as the Extended and Unscented Kalman filter, are built and compared to each other.
+    
+    In the last chapter, an upgraded working prototype of the AR application is tested in the Underwater Archaeological Park of Baia in Italy. The quality of the prototype is discussed, and gives suggestions for future development.
+
+\chapter{Background}
+    \begin{figure}
+        \includegraphics[width=10cm]{img/Baia2.jpg}
+        \caption{A tablet housed in a waterproof case showing an original reconstruction of Villa a Protiro.}
+        \label{fig:baia2}
+    \end{figure}
+
+    The seabed is often called the biggest museum in the world. Throughout the history of human civilizations, entire cities have been flooded, and thousands of ships have sunken to the bottom of the lakes, seas, and oceans. In this subaqueous environment, they have been safely protected for thousands of years. Now they are a part of our cultural heritage in the same way as the heritage on land.
+    
+    Advances in technology have made the underwater world more accessible and therefore brought these sites within reach. The visitors are offered in situ experiences, which include dive trails, submersible tours for non-divers, and underwater museums \cite{unesco_online}.
+    
+    \textbf{Project iMare-Culture} focuses on promoting them to the wide public through the use of interactive technologies, virtual reality (VR), augmented reality (AR), and serious games\footnote{A serious game is a game designed for a primary purpose other than pure entertainment.}; all designed by scientists, researchers, archaeologists, and museum experts coming from eight Mediterranean countries.
+    
+    This thesis is a part of augmented reality research for this project. Figure \ref{fig:baia2} shows an example of AR usage, where the scuba diver is holding a tablet housed in a waterproof case, and observing an original reconstruction of Villa a Protiro in the Archaeological Underwater Park of Baia, Italy.
+
+\chapter{Pose estimation for Augmented Reality}
+    As Azuma defined in 1997, AR systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly with the real world. Besides aligning real and virtual objects with each other, these systems have to be interactive and in real time \cite{97azuma}. In contrast with VR, where the user is immersed in a virtual environment, AR allows interaction with virtual objects in a seamless way.
+
+    The main AR research topics are Tracking Techniques, Interaction Techniques, Calibration and Registration, AR Applications, and Display Techniques \cite{17ISMAR}. Tracking is the most popular and fundamental one to deliver a coherent AR system. Its goal is to estimate the pose of the camera, i.e., the position and orientation relative to a reference frame. Despite the enormous progress in this field in the last ten years, it is still challenging to achieve low latency tracking with high precision, accuracy, jitter, and lag in a mobile device. If we compare AR and VR again, but now in terms of tracking requirements, AR is more demanding because errors in registration are easier to detect by the user \cite{93Azuma}.
+    
+    The tracking problem gets even more complex in underwater environments, where the system has to be waterproof, has to withstand the high pressure of diving depth, cannot rely on GPS, and the captured images suffer from turbidity effects caused by the medium.
+    
+    Furthermore, the amount and cost of sensors packed in smartphones are much more limited than in specialized devices used in for example robotics \cite{vi-sensor}. As a consequence, the measurements are noisier and biased. Tracking techniques tackle these problems by integrating several sensors with complementary characteristics into a sensor fusion filter. In this chapter, an overview of the pose estimation techniques is given with an emphasis on underwater use.
+
+    \section{Tracking techniques}
+        \subsection{Visual tracking}
+            Vision-based techniques use computer vision methods to calculate the camera pose relative to real-world objects \cite{99SoYou,02Pinz}. They provide high accuracy over a large workspace, low jitter, and no drift. The frames are grabbed at rates of 30-60Hz. The general drawbacks include that they require line-of-sight between the camera and the detected target, and that motion blur in the image during drastic motions leads to temporary loss of real-time tracking abilities. The targets of the detector are either markers (marker-based tracking) or distinctive features in the image (markerless tracking). 
+    
+            Marker-based tracking methods simplify the problem of detecting 3D objects by detecting only 2D artificial markers that are easy to recognize \cite{19Cejka}. The most dominant technique in marker-based tracking is detecting square markers. They are easy and fast to detect and contain enough information to compute their relative pose to the camera. Examples of some software libraries are ARToolKit \cite{ARToolKit}, ARTag \cite{ARTag}, ARUco \cite{ARUco}, AprilTag \cite{AprilTag}. Besides square markers, other types of markers are also used in AR. For example circular or elliptic markers \cite{CircularMarker, EllipticMarker}. The elliptic shape of their contours provides more information about the position than in the case of square markers. Thus, they can be detected even when they are partially occluded. This is, however, paid by higher processing time. Other types of markers are described in \cite{OtherMarker1, OtherMarker2, OtherMarker3, OtherMarker4, OtherMarker5}.
+            
+            Instead of detecting artificial markers, markerless tracking methods detect the distinctive features in the image like edges, corners, or textures. The detection algorithms consist of two parts: detection of these features and computation of a descriptor for each feature that can match the features between frames \cite{19Cejka}. The speed and accuracy depend on the complexity of the scene. While simple targets like blobs or corners can be easily identified, cluttered scenes with many objects which are moving independently are extremely difficult to handle \cite{02Pinz}. This method is also not suitable for textureless environments. Examples of algorithms for natural feature detection used in augmented reality are SIFT \cite{SIFT}, SURF detector \cite{SURF}, and FAST \cite{FAST}. Markerless tracking is further used in simultaneous localization and mapping (SLAM) solutions described later in this chapter.
+        
+            \begin{figure}
+                \includegraphics[width=10cm]{example-image}
+                \caption{Different types of markers}
+                \label{fig:Markers}
+            \end{figure}
+            
+            Under-water localization from vision is still an open problem, and the state-of-the-art algorithms in visual odometry or SLAM do not give satisfying results \cite{17Weidner}. Most of the difficulties arise due to visual degradations caused by the medium. First, the strong light absorption shortens the visual perception to a few meters and makes the presence of an artificial lighting system mandatory when operating in deep waters. Second, the propagation of light is scattered by floating particles, causing turbidity effects on the captured images. Finally, the artificial light attracts the animals, and they tend to get in the field of view of the camera, which leads to occlusions in the images.
+    
+        \subsection{Inertial tracking}
+            Most smartphones have an Inertial Measurement Unit (IMU) for monitoring the body's movement or orientation in three-dimensional space with respect to the Earth coordinate system. The IMU consists of a triple axis accelerometer and a triple axis gyroscope, see Figure \ref{fig:AndroidIMU}. The accelerometer senses the acceleration of the sensor along of each input axis, while the gyroscope measures the angular velocity around each input axis. Together, they form a 6 DoF (Degrees of Freedom) tracking system, i.e., tracking movement in 3 axes plus rotation in 3 axes (pitch, roll, yaw). Sometimes a third set of sensors, magnetometers, is added for heading reference (yaw axis), measuring the Earth's magnetic field. However, they are easily distorted by any nearby metallic substance that disturbs the magnetic field \cite{08ISMAR}. Thus, they are not further used in this thesis.
+            
+            \begin{figure}
+                \includegraphics[width=6cm]{img/AndroidIMU.png}
+                \caption{Coordinate system (relative to a device) that's used by the Android Sensor API.\protect\footnotemark}
+                \label{fig:AndroidIMU}
+            \end{figure}
+            \footnotetext{\url{https://developer.android.com/guide/topics/sensors}}
+            
+            \subsubsection{MEMS}
+            As opposed to the traditional mechanical IMUs, the IMUs in smartphones are based on MEMS (Microelectromechanical systems) technology. On the one hand, this makes them lightweight, compact, power-efficient, and less expensive, thus well suited for mobile computing. On the other hand, due to imperfections of the manufacturing and physical characteristics of the sensors, real IMU measurements are usually affected by random noise and systematic errors, such as bias, inaccurate scale factors, axis misalignments, and g-sensitivity \cite{19Xiao, 94Titteron, 03Nassar}. These errors may significantly influence the performance of visual-inertial methods.
+            
+            The following example illustrates these errors on the accelerometer: The accelerometer measures proper accelerations that are accelerations relative to a free fall. For example, if the device is laying flat on the table, the accelerometer should measure an acceleration of $1g \approx 9.81 m/s^2$ away from the center of the Earth. In contrast, when the device is in free fall, it should measure zero. However, as shown in Figure \ref{fig:imu_errors}, due to the bias of $-0.06 m/s^2$ and random noise of $0.02 m/s^2$, the measured acceleration is $9.77 m/s^2$.
+
+            \begin{figure}
+                \includegraphics[width=10cm]{img/IMU_errors.png}
+                \caption{The bias (the offset of the sensor measurement from the physical input), noise (or gain is the random noise that affects the sensor measurements), and the scale factor (the relation between input and output) \cite{novatel}.}
+                \label{fig:imu_errors}
+            \end{figure}
+            
+            Thus, the sensor measurements are modeled as follows:
+            \begin{align} 
+                a_m &= (a - g) + b_a + n_a \\
+                w_m &= w + b_\omega + n_\omega
+            \end{align}
+            where $a_m$ and $w_m$ are the raw measurements of accelerometer and gyroscope, respectively, $a$ and $w$ are linear acceleration and angular velocity of the body frame. $g$ is the gravity vector, $b_a$ and $b_\omega$ are the accelerometer and gyroscope biases respectively, $n_a$ and $n_\omega$ are the measurement noises. In this thesis, $n_a$ and $n_\omega$ are assumed to be Gaussian white noise, $n_a \sim \mathcal{N}(0,\sigma^2_a), n_\omega \sim \mathcal{N}(0,\sigma^2_\omega)$. For other IMU measurement models involving scale factors, axis misalignment, g-sensitivity, etc., please refer to \cite{16Rehder}. Calibration techniques are used to obtain the value of the bias.
+            
+            \subsubsection{IMU Calibration}
+            To identify the value of bias and other intrinsic parameters of sensors for compensating the measurement errors, we use IMU calibration \cite{19Xiao}. Calibration is done by comparing the raw measurements to some known reference values and minimizing the differences between them. The reference calibration values can be estimated offline or online. 
+
+            Offline calibration is relevant in the case of high-performance sensors which are manufactured precisely or factory calibrated carefully, and each sensor is sold with its own calibration parameters stored into the firmware \cite{14Tedaldi}. However, in consumer electronics, low-cost IMUs are used. The traditional high precision calibration methods require special external equipment such as motion tracking system \cite{04Kim}, which is often time-consuming and more expensive than the IMU itself. Moreover, the intrinsic calibration parameters may vary with mechanical shocks, temperature, and other factors. Treating these parameters as a constant would lead to performance degradation of the inertial tracking system \cite{19Xiao}. For an example of offline accelerometer calibration, please refer to \cite{98Lotters}.
+            
+            In contrast, online calibration is repeating the calibration process periodically. It is performed real time and without any external equipment. For example, Xiao et al. \cite{19Xiao} used this method to concurrently perform 3D pose estimation and online IMU calibration based on optimization methods in unknown environments without any external equipment. This thesis also utilizes the online calibration method.
+            
+            \subsubsection{Other IMU drawbacks}
+            Besides bias and gain, another issue arises when using IMUs for navigation is the drift, an ever-increasing difference between where the system thinks it is located and the actual location. The drift occurs due to integrations with respect to time, where even small errors in measurements accumulate over time. In the case of position, the first integration of acceleration returns velocity and the second returns position. A constant error in acceleration results in a linear error in velocity and a quadratic error growth in the position \cite{08Springer}.
+
+            If the angular velocity measurements from the gyroscope are integrated to obtain the orientation, the errors accumulate over time similarly to the accelerometer. Thus, in many attitude estimation solutions, the two sensors are fused because of their complementary characteristics: the gyroscope is accurate for quick movement in short periods of time, and the accelerometer determining the gravitation vector in longer periods of time \cite{99Luinge}. Fusing gyroscopes and accelerometers allows determining pitch and roll axes.
+            
+        \subsection{Visual-inertial tracking}
+        
+        
+            
+            
+            
+\chapter{Kalman filtering}
+
+\chapter{Underwater localization}
+
+\chapter{Experiment}
+    \section{Setup}
+    \section{Results}
+    \section{Discussion}
+
+
+\printbibliography[heading=bibintoc] %% Print the bibliography.
+\end{document}
