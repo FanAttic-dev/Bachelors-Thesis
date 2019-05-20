@@ -76,14 +76,14 @@
 
     Immersive technologies are extensively used at such archaeological sites since they can present information connected to user's location, e.g., historical facts, visual navigation, or even provide an augmented reality view of the original state of the structure. A European Union project, named iMareCulture\footnote{https://imareculture.eu/}, is concerned about developing such applications. One branch of the project, which this thesis is a part of, aims at implementing virtual visits in augmented reality.
     
-    As defined in \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer--generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real--time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
+    As defined in \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real-time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
     
     \begin{itemize}
-      \item Vision--based methods provide high accuracy but slow update rates and require line--of--sight between the camera and the markers;
-      \item Inertial tracking, performed by the sensors from the inertial sensor unit (IMU), provides high--frequency measurements but is unreliable to track position for long periods of time due to problems with sensor bias and drift.
+      \item Vision-based methods provide high accuracy but slow update rates and require line-of-sight between the camera and the markers;
+      \item Inertial tracking, performed by the sensors from the inertial sensor unit (IMU), provides high-frequency measurements but is unreliable to track position for long periods of time due to problems with sensor bias and drift.
     \end{itemize}
     
-    The goal of this thesis is the fusion of these two complementary approaches to get more accurate pose estimations than by using any of them alone. It extends an existing prototype of a vision--based AR application for Android phones and tablets. The application uses methods from ArUco library\footnote{ArUco is an OpenSource library for camera pose estimation using squared markers. \url{https://www.uco.es/investiga/grupos/ava/node/26}} with 2D barcode markers, detected by the camera, that are to be distributed in the archaeological site. For sensor fusion, a common data fusion algorithm that combines and smooths the measured values -- the Kalman filter -- is utilized.
+    The goal of this thesis is the fusion of these two complementary approaches to get more accurate pose estimations than by using any of them alone. It extends an existing prototype of a vision-based AR application for Android phones and tablets. The application uses methods from ArUco library\footnote{ArUco is an OpenSource library for camera pose estimation using squared markers. \url{https://www.uco.es/investiga/grupos/ava/node/26}} with 2D barcode markers, detected by the camera, that are to be distributed in the archaeological site. For sensor fusion, a common data fusion algorithm that combines and smooths the measured values - the Kalman filter - is utilized.
     
     The first chapter discusses the available AR platforms with references to related works. The next two chapters introduce the theoretical background of the tracking methods, the relations between the coordinate frames, and the Kalman filtering.
     
@@ -167,112 +167,112 @@
             In contrast, online calibration is repeating the calibration process periodically. It is performed real time and without any external equipment. For example, Xiao et al. \cite{19Xiao} used this method to concurrently perform 3D pose estimation and online IMU calibration based on optimization methods in unknown environments without any external equipment. This thesis also utilizes the online calibration method.
             
             \subsubsection{Other IMU drawbacks}
-            Besides bias and gain, another issue arises when using IMUs for navigation is the drift, an ever--increasing difference between where the system thinks it is located and the actual location. The drift occurs due to integrations with respect to time, where even small errors in measurements accumulate over time. In the case of position, the first integration of acceleration returns velocity and the second returns position. A constant error in acceleration results in a linear error in velocity and a quadratic error growth in the position \cite{08Springer}.
+            Besides bias and gain, another issue arises when using IMUs for navigation is the drift, an ever-increasing difference between where the system thinks it is located and the actual location. The drift occurs due to integrations with respect to time, where even small errors in measurements accumulate over time. In the case of position, the first integration of acceleration returns velocity and the second returns position. A constant error in acceleration results in a linear error in velocity and a quadratic error growth in the position \cite{08Springer}.
 
             If the angular velocity measurements from the gyroscope are integrated to obtain the orientation, the errors accumulate over time similarly to the accelerometer. Thus, in many attitude estimation solutions, the two sensors are fused because of their complementary characteristics: the gyroscope is accurate for quick movement in short periods of time, and the accelerometer determining the gravitation vector in longer periods of time \cite{99Luinge}. Fusing gyroscopes and accelerometers allows determining pitch and roll axes.
             
         \subsection{Hybrid tracking}
         Hybrid tracking is a promising alternative to tracking techniques. It combines multiple sensors to build more robust and accurate tracking systems. This sensor fusion exhibits the virtues of both technologies and compensates for their respective drawbacks \cite{99SoYou}.
 
-        Visual--inertial tracking takes advantage of the complementary properties of visual and inertial sensors \cite{16Palonen}. On the one hand, the drawbacks of vision tracking, i.e., low--frequency, line--of--sight requirement, and slow motions due to motion blur, are compensated by the advantages of the IMU, i.e., high--frequency measurements from the IMU, occlusion immunity, and high accuracy in cases of rapid directional changes or high rotational speed. On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
+        Visual-inertial tracking takes advantage of the complementary properties of visual and inertial sensors \cite{16Palonen}. On the one hand, the drawbacks of vision tracking, i.e., low-frequency, line-of-sight requirement, and slow motions due to motion blur, are compensated by the advantages of the IMU, i.e., high-frequency measurements from the IMU, occlusion immunity, and high accuracy in cases of rapid directional changes or high rotational speed. On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
         
-        Several approaches are tackling the visual--inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
+        Several approaches are tackling the visual-inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
         \begin{itemize}
-            \item loosely coupled systems -- they independently estimate the pose by a vision--only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
-            \item tightly coupled approaches -- they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
+            \item loosely coupled systems - they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
+            \item tightly coupled approaches - they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
         \end{itemize}
-        This thesis uses recursive filtering by utilizing the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high--precision visual--inertial navigation system and is implemented in most high--accuracy visual--inertial systems estimators \cite{13Leutenegger}.
+        This thesis uses recursive filtering by utilizing the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high-precision visual-inertial navigation system and is implemented in most high-accuracy visual-inertial systems estimators \cite{13Leutenegger}.
         
         \subsection{SLAM}
-        Hybrid tracking approaches are often combined with simultaneous localization and mapping (SLAM). SLAM is the computational problem of building a map of an unknown environment and, at the same time, using this map to compute the pose of the tracking device \cite{SLAMII}. It is a markerless technology, i.e., no markers or image targets are necessary to place in the environment. The map is created by obtaining spatial data of the environment, for example, 3D point clouds. Mapping and tracking simultaneously have high computational demands on the device, which is also a reason why SLAM solutions were initially employed in systems with specialized equipment, for example in robotics, self--driving cars, or unmanned aerial vehicles. However, thanks to advances in computer vision, performance, and sensory navigation of mobile devices in the past decade, smartphones are powerful enough to run AR applications that use SLAM. For general concepts of existing mobile SLAM techniques, please refer to \cite{17Taketomi} and for a survey of 23 chosen methods to \cite{16Younes}.
+        Hybrid tracking approaches are often combined with simultaneous localization and mapping (SLAM). SLAM is the computational problem of building a map of an unknown environment and, at the same time, using this map to compute the pose of the tracking device \cite{SLAMII}. It is a markerless technology, i.e., no markers or image targets are necessary to place in the environment. The map is created by obtaining spatial data of the environment, for example, 3D point clouds. Mapping and tracking simultaneously have high computational demands on the device, which is also a reason why SLAM solutions were initially employed in systems with specialized equipment, for example in robotics, self-driving cars, or unmanned aerial vehicles. However, thanks to advances in computer vision, performance, and sensory navigation of mobile devices in the past decade, smartphones are powerful enough to run AR applications that use SLAM. For general concepts of existing mobile SLAM techniques, please refer to \cite{17Taketomi} and for a survey of 23 chosen methods to \cite{16Younes}.
 
         Since there is no need for adding other elements in the environment and today's smartphones have enough computing power, many commercial AR software development kits (SDK) are based on SLAM. The most powerful and popular SDK's are ARCore (Google) \cite{ARcore}, ARKit (Apple) \cite{ARkit}, and Vuforia (PTC) \cite{Vuforia}. They offer native application programming interfaces (API's) for motion tracking, environmental understanding, and light estimation to simplify the task of building an AR experience. The developer can make use of the detection of horizontal surfaces, point cloud anchors, and virtual objects lighting that matches the surroundings to make their appearance more realistic. Amin and Govilkar give a comparative study of AR SDK's in \cite{Comparative}.
         
     \section{Underwater pose estimation}
-    \label{underwater_pose_estimation}
+    \label{sec:underwater_pose_estimation}
     Under the water, the number of requirements for an AR system is higher than on land. The system has to be waterproof, has to withstand the high pressure of diving depth and cannot rely on GPS \cite{18Ferrera}. This leads to the use of expensive, robust systems (e.g., remotely operated vehicles (ROVs) or autonomous underwater vehicles (AUVs)) that have to be equipped with advanced sensors (e.g., sonars, acoustic positioning systems, or Doppler velocity loggers (DVLs)), which are not suitable for mobile AR.
 
-    Some solutions found in the literature rely on IMUs, pressure sensors and DVLs \cite{14Paull}, which, as discussed in this chapter, leads to unavoidable drift over time due to measurement noise. The drift is constrained using complementary sensors such as cameras or acoustic positioning systems. However, at close--range, acoustic systems do not provide accurate enough localization information whereas visual sensing can be highly effective \cite{18Palomeras}. Nevertheless, as discussed in the introduction of this chapter, the captured images are degraded by turbidity. Furthermore, the information delivered by sonar is not as rich as optical images \cite{15BoninFont} and remain very challenging to analyze.
+    Some solutions found in the literature rely on IMUs, pressure sensors and DVLs \cite{14Paull}, which, as discussed in this chapter, leads to unavoidable drift over time due to measurement noise. The drift is constrained using complementary sensors such as cameras or acoustic positioning systems. However, at close-range, acoustic systems do not provide accurate enough localization information whereas visual sensing can be highly effective \cite{18Palomeras}. Nevertheless, as discussed in the introduction of this chapter, the captured images are degraded by turbidity. Furthermore, the information delivered by sonar is not as rich as optical images \cite{15BoninFont} and remain very challenging to analyze.
     
 \chapter{Kalman filtering}
 
-\chapter{Localization in simulated underwater environments}
-The goal of this thesis is to choose a mobile, fiducial based, visual--inertial pose tracking system, and to evaluate its performance in underwater conditions. To be able to assess the tracking precision, the pose estimates have to be compared to ground truth. For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-
--processing marker detection results. 
+\chapter{Localization in a simulated underwater environment}
+The goal of this thesis is to choose a mobile, fiducial based, visual-inertial pose tracking system, and to evaluate its performance in underwater conditions. To be able to assess the tracking precision, the pose estimates have to be compared to ground truth. 
+
+For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-
+-processing marker detection results.
 
 In this chapter, Section 2.1 \todo{Sectioning} introduces the chosen underwater localization method, Section 2.2 explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
 
-
-\section{Pose estimation}
-When choosing a suitable solution for underwater localization in the context of this thesis, various constraints have to be taken into account. As discussed in \ref{underwater_pose_estimation}, some sensors, for example GPS or magnetometers, are not suitable for underwater use, which already discards a large number of implemented localization systems found in the literature. 
-
-In addition, besides using square fiducial markers, the system should be completely self--contained, i.e., not relying on any external equipment, such as acoustic positioning systems extensively used under water.
-
-Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. RCARS (Robot--Centric Absolute Reference System) is a fiducial--based, visual-inertial EKF--SLAM state estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which allows the system to be lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
+\section{Pose estimation system}
+When choosing a suitable solution for underwater localization in the context of this thesis, various constraints have to be taken into account. As discussed in \ref{sec:underwater_pose_estimation}, some sensors, for example, GPS or magnetometers, are not suitable for underwater use, which already discards a large number of implemented localization systems found in the literature. 
+ 
+In addition, besides using square fiducial markers, the system should be completely self-contained, i.e., not relying on any external equipment, such as acoustic positioning systems extensively used under water.
 
 
-    \subsection{ROS}
-    RCARS is built on the Robot Operating System (ROS) software interface. ROS\footnote{\url{https://www.ros.org/}} is an open-source, meta--operating system for robots. It provides services such as hardware abstraction, low--level device control, inter--process communication, and package management. 
-    
-    ROS--based processes are represented as nodes in a graph architecture, connected by edges called topics. Topics are \textit{buses} over which nodes send and receive messages. To send a message, a node must publish to a topic, while to receive messages it must subscribe. The types of messages passed on a topic vary widely and can be user-defined. The content of these messages can be sensor data, motor control commands, state information, actuator commands, or anything else.
-    
-    ROS provides various tools for logging, debugging, file management, or visualization. This thesis uses the following ones: 1) \textit{rosbag} and \textit{rqt\_bag} for recording and replaying messages; 2) \textit{rviz} for 3D workspace visualization (see \textbf{Section RCARS visualization}); 3) \textit{rqt\_graph} for graphing the relationships between nodes and topics.
-    
-    \subsection{RCARS packages}
-    RCARS consists of three packages: the detector, the estimator, and the visualizer. These packages are run using launch-files that are holding the parameters of the packages. After launching them, they are visible as nodes. Fig. \ref{fig:nodes} shows how they exchange information by publishing and subscribing to different topics. This subsection provides more detail about each node used in this thesis. For additional information, please refer to the documentation\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Software_Structure}} and the RCARS publication \cite{15Neunert}.
-    
-    \begin{figure}
-        \includegraphics[width=8cm]{example-image}
-        \caption{Nodes}
-        \label{fig:nodes}
-    \end{figure}
+    \subsection{RCARS}
+    Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. \textbf{RCARS} (Robot-Centric Absolute Reference System) is a fiducial-based, visual-inertial EKF-SLAM state estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which allows the system to be lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
 
-    The first node contains data from the smartphone, i.e., the raw images (\textit{image\_raw}), the camera metadata (\textit{camera\_info}), and the inertial measurements (\textit{imu}). Then, the (\textit{image\_proc}) node undistorts the image according to the camera calibration parameters saved in (\textit{camera\_info}) topic.
+    RCARS is built on the Robot Operating System (ROS) software interface. ROS\footnote{\url{https://www.ros.org/}} is an open-source, robotics middleware for creating robot applications. It provides services such as hardware abstraction, device drivers, libraries, visualizers, message-passing, and package management. 
     
-    \subsection{RCARS detector}
-    Together with the metadata, this undistorted image is subscribed by the RCARS detector node. This node then detects and publishes the marker information, such as the marker id, locations of the four corners in image coordinates, and also the location of the marker with respect to the camera. As discussed later in section X (Simulating Underwater environments), these marker detections will be modified in order to simulate possible underwater conditions. For example, to simulate low visibility, markers that are further away from the camera than a given threshold are discarded. This is done by comparing the z coordinate of the tag position with respect to the camera. In addition, to simulate water turbidity, the corner locations are corrupted by adding random noise of a given amount.
+    ROS-based processes are represented as nodes in a graph architecture, connected by edges called topics. Topics are \textit{buses} over which nodes send and receive messages. To send a message, a node must publish to a topic, while to receive messages it must subscribe. The types of messages passed on a topic vary widely and can be user-defined. The content of these messages can be sensor data, motor control commands, state information, actuator commands, or anything else.
     
-    \subsection{RCARS estimator}
-    The estimator node realizes the Kalman filtering. It subscribes to the marker information published by the detector node, as well as the inertial measurements from the smartphone. The estimator then publishes the pose of the smartphone, along with the extrinsic calibration parameters and the marker poses in a reference frame. 
+    \missingfigure[figwidth=10cm]{RCARS nodes}
     
-    \subsubsection{Coordinate frames}
-    As shown in Fig. \ref{fig:coordinate_frames}, the estimator works with separate coordinate systems for the workspace, IMU, camera, and each tag. The origin of the workspace frame is set at the estimator initialization, i.e., when it starts receiving the smartphone measurements. This frame assumes that the gravity points in negative z-direction.
+    The RCARS the software structure \footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Software_Structure}}, generated by the \texttt{rqt\_graph} tool, is visualized in Fig. X. RCARS operates on three nodes - the estimator, the detector, and the visualizer - and the topics passed between them are, for example, the image (\texttt{/cam0/image\_raw}), the IMU measurements (\texttt{/imu0}), or the detected tags (\texttt{/rcars/detector/tags}).
     
-    \begin{figure}
-        \includegraphics[width=8cm]{example-image}
-        \caption{Coordinate frames}
-        \label{fig:coordinate_frames}
-    \end{figure}
+    \missingfigure[figwidth=10cm]{RCARS visualizer}
+
+    The detector detects markers in the received undistorted images and publishes marker information, such as the marker id, the locations of its four corners in the image coordinates, or also the location of the marker with respect to the camera. RCARS uses AprilTags as markers, shown in Fig.X, which are 2-dimensional, square printable markers with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
     
-    \subsubsection{EKFSettings.info}
-    It has an associated configuration file \textit{EKFSettings.info}, which holds the parameters for the EKF. These parameters are described in \cite{bitbucket_config, bitbucket_forum}. The most important ones for our testing are: 
+    \missingfigure[figwidth=10cm]{AprilTag}
+
+    The estimator realizes the Kalman filtering. It subscribes to the detected markers and the inertial measurements, and uses them for estimating the pose of the device, as well as the extrinsic calibration between the IMU and the camera. 
+ 
+    The visualizer uses \texttt{rviz}\footnote{\url{http://wiki.ros.org/rviz}} for a 3D visualization of the workspace, as well as an image preview. As seen in Fig.X, the image preview shows the tag corner detections and their corresponding estimations separately. This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
     
-    \begin{itemize}
-        \item \textbf{Extrinsic calibration}, the transformation between the IMU and the camera;
-        \item \textbf{Sqaured pixel standard deviation} of noise in tag corner detections;
-        \item \textbf{Mahalanobis threshold} defining when a tag pose estimate is considered an outlier.
-    \end{itemize}
-    \todo[inline]{More info}
+    \subsection{Utilizing RCARS}
+    The drawback of RCARS is that it runs only on a computer. Thus, the pose estimation cannot be realized online on the Android smartphone used in this thesis, which leads to a series of steps that need to be done to utilize RCARS. This workflow is shown in Fig.X
     
-    \subsection{RCARS visualization}
-    This package provides visualization of the 3D workspace with an image preview. As seen in Fig. \ref{fig:visualization}, the image preview shows the tag corner detections and their corresponding estimations separately. This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
+    \missingfigure[figwidth=10cm]{Workflow}
     
-    \begin{figure}
-        \includegraphics[width=8cm]{example-image}
-        \caption{Visualization}
-        \label{fig:visualization}
-    \end{figure}
+    First, we have to transform the measurements from the smartphone into proper input data for ROS and RCARS. ROS provides packages\footnote{\url{http://wiki.ros.org/rosserial}} for communication with the serial ports of electronic devices connected to the computer, which allow live sending of data to ROS; however, these packages are built mainly for microcontrollers such as Arduino. Although there is a driver\footnote{\url{http://wiki.ros.org/android_sensors_driver}} also for wireless communication with Android devices, it supports only sending GPS and IMU measurements, not the camera images that are needed here.
+
+    Therefore, in our experiment, we first need to record the datasets and then transfer the image and the IMU measurements to ROS in a proper format. The recording is realized by the iMareCameraRecorder application developed by Jan Čejka for the AR systems research within the iMareCulture project. This application provides recording of uncompressed, time-stamped images and IMU measurements.
+
+    This data needs to be converted into a bag file to run RCARS on it. The bag\footnote{\url{http://wiki.ros.org/Bags}} is a file format for storing ROS message data. The conversion is realized by the \texttt{phone2bag.py} Python script that uses the rosbag Python API\footnote{\url{http://wiki.ros.org/rosbag/Code\%20API\#py_api}} to write into a bag file. The bag file contains the following topics:
+    \begin{description}
+        \item [\textbf{camera\_info}] holds the camera metadata, such as the intrinsic calibration parameters or the image resolution;
+        \item [\textbf{image\_raw}] holds the raw camera images;
+        \item [\textbf{imu}] holds the accelerometer and gyroscope measurements.
+    \end{description}
+	
+    The script uses the logged timestamps for synchronizing the IMU with the images. Note that RCARS allows using only one sampling rate for the IMU measurements. In our case, since the iMareCameraRecorder records the accelerometer at 400Hz and the gyroscope at 200Hz, we downsampled the accelerometer measurements to 200Hz to be synchronized with the gyroscope. In addition, we use the rosbag\footnote{\url{http://wiki.ros.org/rosbag}} tools for recording and playing back bag files. 
+
+    When the bag files are prepared, we play them with rosbag. When the bag file is being played, it appears to RCARS as if there was a live stream of data from a device, which finally allows us to use it.
     
-    \subsection{AprilTags}
-    The marker types used by RCARS are AprilTags \cite{AprilTag}. AprilTags are 2-dimensional, square, printable tags with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. \cite{15Neunert} \cite{15Neunert}reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
+    First, as shown in Fig.X, the integrated ROS image processing node\footnote{\url{http://wiki.ros.org/image_proc}} undistorts the raw image using the intrinsic camera calibration parameters in the \texttt{camera\_info} topic.
+
+    Second, these undistorted images, as well as the IMU measurements, proceed to the estimator node. The estimator provides a configuration file \texttt{EKFSettings.info}\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Configuration}} that allows customizing the EKF parameters to our device. Since configuring an EKF is not trivial and requires some experience, we left most of the parameters on default. However, since Neunert et al. use the specialized Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}}, there are parameters that have to be changed because we use a different device:
+    \begin{enumerate}
+        \item the extrinsic calibration between the IMU and the camera;
+        \item the squared pixel standard deviation of the tag corner detection results;
+        \item the Mahalonobis threshold defining when a marker is considered an outlier.
+    \end{enumerate}
+	
+    Enough time should be devoted to determining these values for the device, because they are critical for the estimator to work correctly. Also note that the VI-Sensor, used in the orignal paper \cite{15Neunert}, provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. Therefore, it is not expected from the smartphone to provide such accurate and robust pose estimates as the authors achieved. 
     
-    \todo[inline]{TODO: They use "a tightly coupled approach where the corner detections are used as observations, forming a holistic sensor fusion algorithm." => which will be used in simulations by adding noise.}
+    The estimator then finally publishes the topic \texttt{/rcars/filterPose} that contains the pose estimates of the device and all tags. For working with these estimates, we identify the filter coordinate frames using the rviz tool that provides a 3D visualization of our workspace. As shown in Fig.X, the estimator works with different coordinate systems for the workspace, IMU, camera, and each tag. The origin of the workspace frame is set at the estimator initialization, i.e., when it starts receiving the smartphone measurements. This frame assumes that the gravity points in negative z-direction.
     
-    \subsection{Hardware}
-    \todo[inline]{TODO they use Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}} developed by the Autonomous Systems Lab (ASL), ETH Zurich and Skybotix. This sensor provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. they use 20Hz camera in VGA resolution, 200Hz IMU}
+    \missingfigure[figwidth=10cm]{Coordinate frames}
     
+    We then record the topics from the estimator that we are interested in again into a bag file. Consequently, this bag is converted into the csv\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format, which is analyzed in MATLAB in the evaluation section, see \ref{sec:evaluation}.
+
 \section{Simulating underwater environments}
 
+\section{Evaluation}
+\label{sec:evaluation}
+\se
 
 \chapter{Experiment}
 \section{Setup}
@@ -299,7 +299,7 @@ Calibration and bias free comparison is essential for our experiment. This secti
     \end{itemize}
     
     \subsection{Phone}
-    The smartphone we used is the OnePlus 6 running on Android 9 and equipped with a 16 MP, f/1.7, wide--angle camera (25mm (wide), 1/2.6") and the BMI160\footnote{\url{https://www.bosch-sensortec.com/bst/products/all_products/bmi160}} IMU manufactured by Bosch Sensortec\footnote{\url{https://www.bosch-sensortec.com/}}.
+    The smartphone we used is the OnePlus 6 running on Android 9 and equipped with a 16 MP, f/1.7, wide-angle camera (25mm (wide), 1/2.6") and the BMI160\footnote{\url{https://www.bosch-sensortec.com/bst/products/all_products/bmi160}} IMU manufactured by Bosch Sensortec\footnote{\url{https://www.bosch-sensortec.com/}}.
     
     \subsection{Intrinsic calibration}
     The intrinsic camera calibration was performed in the laboratory to assert equal lighting conditions than in the datasets recordings. We used the OpenCV algorithm\footnote{\url{https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html}} that calculates both the camera matrix and the radial and tangential distortion coefficients from a chessboard pattern. 
