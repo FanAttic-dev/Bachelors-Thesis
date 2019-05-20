@@ -15,7 +15,6 @@
            %% `nolof` to hide the List of Figures.
   nolot,     %% This option prints the List of Tables. Replace with
            %% `nolot` to hide the List of Tables.
-  draft,
   %% More options are listed in the user guide at
   %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
 ]{fithesis3}
@@ -57,7 +56,7 @@
 \usepackage{amsthm}
 \usepackage{amsfonts}
 \usepackage{url}      %% Hyperlinks
-\usepackage{todonotes}
+\usepackage[textwidth=2.5cm]{todonotes}
 \usepackage{markdown} %% Lightweight markup
 \usepackage{listings} %% Source code highlighting
 \lstset{
@@ -198,18 +197,19 @@
 \chapter{Kalman filtering}
 
 \chapter{Localization in simulated underwater environments}
-The goal of this thesis is to choose a mobile, fiducial based, visual--inertial pose tracking system, and to evaluate its performance in underwater conditions. To be able to assess the tracking precision, the pose estimates have to be compared to ground truth. 
+The goal of this thesis is to choose a mobile, fiducial based, visual--inertial pose tracking system, and to evaluate its performance in underwater conditions. To be able to assess the tracking precision, the pose estimates have to be compared to ground truth. For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-
+-processing marker detection results. 
 
-For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy. However, this system can only be installed in a controlled environment of a laboratory and cannot be used directly under water. Thus, the experiments in this thesis are conducted in the laboratory equipped with the motion capture system, and the underwater conditions are simulated by post-processing marker detections. 
+In this chapter, Section 2.1 \todo{Sectioning} introduces the chosen underwater localization method, Section 2.2 explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
 
-In this chapter, Section 2.1 introduces the chosen underwater localization method, Section 2.2 explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
 
-\section{RCARS}
-When choosing a suitable solution for underwater localization for this thesis, various constraints have to be taken into account. As discussed in \ref{underwater_pose_estimation}, some sensors, e.g., GPS or magnetometers, are not suitable for underwater use, which already discards a large number of implemented localization systems found in the literature. 
+\section{Pose estimation}
+When choosing a suitable solution for underwater localization in the context of this thesis, various constraints have to be taken into account. As discussed in \ref{underwater_pose_estimation}, some sensors, for example GPS or magnetometers, are not suitable for underwater use, which already discards a large number of implemented localization systems found in the literature. 
 
 In addition, besides using square fiducial markers, the system should be completely self--contained, i.e., not relying on any external equipment, such as acoustic positioning systems extensively used under water.
 
-Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. RCARS (Robot--Centric Absolute Reference System) is a fiducial--based, visual-inertial EKF--SLAM state estimation system,  introduced in The International Conference on Information Fusion in 2016 by Neunert et al. \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which allows the system to be lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
+Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. RCARS (Robot--Centric Absolute Reference System) is a fiducial--based, visual-inertial EKF--SLAM state estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which allows the system to be lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
+
 
     \subsection{ROS}
     RCARS is built on the Robot Operating System (ROS) software interface. ROS\footnote{\url{https://www.ros.org/}} is an open-source, meta--operating system for robots. It provides services such as hardware abstraction, low--level device control, inter--process communication, and package management. 
@@ -227,7 +227,7 @@ Although we did not find any mobile pose tracking system customized for underwat
         \label{fig:nodes}
     \end{figure}
 
-    The first node is publishing the data from the smartphone, i.e., the raw images (\textit{image\_raw}), the camera metadata (\textit{camera\_info}), and the inertial measurements (\textit{imu}). Then, the (\textit{image\_proc}) node undistorts the image according to the camera calibration parameters saved in (\textit{camera\_info}) topic.
+    The first node contains data from the smartphone, i.e., the raw images (\textit{image\_raw}), the camera metadata (\textit{camera\_info}), and the inertial measurements (\textit{imu}). Then, the (\textit{image\_proc}) node undistorts the image according to the camera calibration parameters saved in (\textit{camera\_info}) topic.
     
     \subsection{RCARS detector}
     Together with the metadata, this undistorted image is subscribed by the RCARS detector node. This node then detects and publishes the marker information, such as the marker id, locations of the four corners in image coordinates, and also the location of the marker with respect to the camera. As discussed later in section X (Simulating Underwater environments), these marker detections will be modified in order to simulate possible underwater conditions. For example, to simulate low visibility, markers that are further away from the camera than a given threshold are discarded. This is done by comparing the z coordinate of the tag position with respect to the camera. In addition, to simulate water turbidity, the corner locations are corrupted by adding random noise of a given amount.
@@ -245,7 +245,14 @@ Although we did not find any mobile pose tracking system customized for underwat
     \end{figure}
     
     \subsubsection{EKFSettings.info}
-    It has an associated configuration file \textit{EKFSettings.info}, which holds the parameters for the EKF. These parameters are described in \cite{bitbucket_config, bitbucket_forum}. The most important ones for our testing are: 1) the extrinsic calibration between the IMU and the camera; 2) the squared pixel standard deviation of the tag corners; 3) and the Mahalonobis threshold defining when a marker is considered an outlier.
+    It has an associated configuration file \textit{EKFSettings.info}, which holds the parameters for the EKF. These parameters are described in \cite{bitbucket_config, bitbucket_forum}. The most important ones for our testing are: 
+    
+    \begin{itemize}
+        \item \textbf{Extrinsic calibration}, the transformation between the IMU and the camera;
+        \item \textbf{Sqaured pixel standard deviation} of noise in tag corner detections;
+        \item \textbf{Mahalanobis threshold} defining when a tag pose estimate is considered an outlier.
+    \end{itemize}
+    \todo[inline]{More info}
     
     \subsection{RCARS visualization}
     This package provides visualization of the 3D workspace with an image preview. As seen in Fig. \ref{fig:visualization}, the image preview shows the tag corner detections and their corresponding estimations separately. This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
@@ -257,23 +264,115 @@ Although we did not find any mobile pose tracking system customized for underwat
     \end{figure}
     
     \subsection{AprilTags}
-    The marker types used by RCARS are AprilTags \cite{AprilTag}. AprilTags are 2-dimensional, square, printable barcodes with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
+    The marker types used by RCARS are AprilTags \cite{AprilTag}. AprilTags are 2-dimensional, square, printable tags with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. \cite{15Neunert} \cite{15Neunert}reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
     
-    \begin{itemize}
-        \item TODO: They use "a tightly coupled approach where the corner detections are used as observations, forming a holistic sensor fusion algorithm." => which will be used in simulations by adding noise.
-    \end{itemize}
+    \todo[inline]{TODO: They use "a tightly coupled approach where the corner detections are used as observations, forming a holistic sensor fusion algorithm." => which will be used in simulations by adding noise.}
     
     \subsection{Hardware}
-    \begin{itemize}
-        \item they use Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}} developed by the Autonomous Systems Lab (ASL), ETH Zurich and Skybotix. This sensor provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream
-        \item they use 20Hz camera in VGA resolution, 200Hz IMU
+    \todo[inline]{TODO they use Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}} developed by the Autonomous Systems Lab (ASL), ETH Zurich and Skybotix. This sensor provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. they use 20Hz camera in VGA resolution, 200Hz IMU}
+    
+\section{Simulating underwater environments}
 
-    \end{itemize}
 
 \chapter{Experiment}
-    \section{Setup}
-    \section{Results}
-    \section{Discussion}
+\section{Setup}
+Calibration and bias free comparison is essential for our experiment. This section describes the specific setup and conditions that our experiments were performed in.
+
+    \subsection{Laboratory}
+    The experiments took place at the Human-Computer Interaction laboratory\footnote{\url{http://hci.fi.muni.cz/}} at the Faculty of Informatics, Masaryk University in Brno. As shown in Fig. \ref{fig:hcil}, the markers were randomly placed across the room, covering an area of 5.4 x 6.6 meters; with the markers attached both on horizontal and vertical surfaces.
+    
+    \begin{figure}
+        \includegraphics[width=8cm]{example-image}
+        \caption{HCIL}
+        \label{fig:hcil}
+    \end{figure}
+    
+    The laboratory is equipped with a high-quality motion capture system from Optitrack\footnote{\url{https://optitrack.com/products/prime-13w/}} that uses 16 ultra-wide cameras (Prime13W), offering high-precision and low-latency tracking with up to 240 FPS capture rate. Tracking of an object is realized by spherical retroreflective markers detected by the cameras. This system is controlled by Motive software, which provides calibration, creating rigid bodies, and recording.
+    
+    Before recording the datasets, a new calibration was performed following the documentation\footnote{\url{https://v20.wiki.optitrack.com/index.php?title=Calibration}}, with exceptional results with the mean 3D error of 0.673 mm. In our experiments, the average error per marker was 0.1mm for the static marker, and 0.4mm for the moving smartphone.
+
+    \subsection{Markers}
+    \begin{itemize}
+        \item apriltags
+        \item in EKFsettings.info, number of dynamic tags is set to 30. I used 27 AprilTags downloaded from here: \url{https://robot2016.mit.edu/sites/default/files/documents/project_apriltag36h11.pdf}
+        \item placed on flat surfaces or attached with pritt gum, or just loosely on a chair, being careful not to bend them
+    \end{itemize}
+    
+    \subsection{Phone}
+    The smartphone we used is the OnePlus 6 running on Android 9 and equipped with a 16 MP, f/1.7, wide--angle camera (25mm (wide), 1/2.6") and the BMI160\footnote{\url{https://www.bosch-sensortec.com/bst/products/all_products/bmi160}} IMU manufactured by Bosch Sensortec\footnote{\url{https://www.bosch-sensortec.com/}}.
+    
+    \subsection{Intrinsic calibration}
+    The intrinsic camera calibration was performed in the laboratory to assert equal lighting conditions than in the datasets recordings. We used the OpenCV algorithm\footnote{\url{https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html}} that calculates both the camera matrix and the radial and tangential distortion coefficients from a chessboard pattern. 
+    We used a chessboard pattern with the count of inner corners along both sides of 9 x 6 and printed it on an A4 paper. The dimensions of one chessboard square were 25 x 25mm. The pattern, as well as the calibration images and coefficients, are provided in the attachments. 
+    The calibration images were following the Matlab camera calibration workflow\footnote{\url{https://www.mathworks.com/help/vision/ug/single-camera-calibrator-app.html}}. As it says, to achieve a good camera calibration, between 10 and 20 images of the checkerboard pattern should be used. In addition, the images should be captured at a distance roughly equal to the distance from the camera to the objects of interest, without using autofocus or changing the zoom settings between images. Furthermore, since lens distortion increases radially from the center of the image and sometimes is not uniform across the image frame, the images should be taken at different orientations relative to the camera and the pattern must appear close to the edges of the captured images.
+
+    \subsection{Extrinsic calibration}
+    Due to the extrinsic calibration, we have to know where the IMU is located in the device. We tried to figure out this location from the OnePlus 6 motherboard photos. Although it indicated possible locations, the exact one was not clear. 
+    Therefore, we used the online extrinsic calibration provided by RCARS. The calibration process, described in chapter X, returned the relative transformation estimate depicted in Fig. \ref{fig:extrinsic}. 
+
+    \begin{figure}
+        \includegraphics[width=8cm]{example-image}
+        \caption{Extrinsic calibration - IMU 50cm in front of the camera}
+        \label{fig:extrinsic}
+    \end{figure}
+    
+    However, note that this estimate is still an approximation and may not reflect the true IMU location, thus the results may be affected by this error.
+    
+    \subsection{Phone rig}
+    To track the phone pose with the motion capture system, we mount retroreflective markers tracked by the cameras on the phone. Thus, we built a custom rig from skewers and rubber bands, shown in FigX. Following the marker placement recommendations from the documentation\footnote{\url{https://v20.wiki.optitrack.com/index.php?title=Rigid_Body_Tracking}}, we attach five spherical markers on the skewer edges asymmetrically, to avoid congruency. 
+    When a rigid body of this rig is created in Motive, its pivot point is at its geometric center. Thus, to put the pivot point to camera location, we measure the distance of the camera lens from the geometric center and translate the pivot point in Motive accordingly.
+    
+    \begin{figure}
+        \includegraphics[width=8cm]{example-image}
+        \caption{Phone rig}
+        \label{fig:rig}
+    \end{figure}
+
+    This phone rig proved to be robust enough against deflection and, with the proper holding of the device, the rig is trackable by the motion capture system throughout the whole dataset with minimal detection losses.
+    
+    \subsection{Motion capture to filter estimation}
+    As proposed in chapterX, the poses have to be aligned according to a common origin to be able to compare the poses measured by the motion capture and the filter. In this case, the origin is set to be the AprilTag with id 1.
+    For position, we tackle the alignment as follows. The tag frame origin of the detected tag in OpenCV is in its geometrical center. Also, when a rigid body is created in Motive, its pivot point is placed at its geometric center. Thus, for tracking of the tag with motion capture, the reflective markers are placed onto the four corners of the tag, and a rigid body is created consequently. This way, we ensure that the origin of the marker pose is the same for both RCARS and motion capture.
+    To be able also to compare the orientation of the mocap and the filter, we take the orientation in the filter as a reference. When OpenCV detects the tag, the tag is assigned orientation axes as shown in Fig.X. The axes of the camera are aligned with the tag when the phone is laying flat on the tag with the camera on top. Thus, initializing the axes for the tag and the phone, in the same way, allows us to also compare the orientation of the mocap measurements and the filter estimates.
+    
+    \begin{figure}
+        \includegraphics[width=8cm]{example-image}
+        \caption{Axes}
+        \label{fig:axes}
+    \end{figure}
+
+    Since a new rigid body in motive has its axes aligned with the global coordinate axis, we place the tag aligned with the global frame. Then we lay the phone on the tag so that their geometrical centers overlap, as shown in FigX. Now the new rigid bodies for the tag and the phone can be created.
+    
+    \subsection{Recording}
+    For recording the datasets on the smartphone, we used iMareCameraRecorder, developed by Jan Čejka. A recording contains accelerometer, gyroscope, and magnetometer measurements, and camera images with their corresponding timestamps. Note that the camera frames and the IMU samples are not synchronized as in the case of the specialized VI-Sensor, which may negatively affect the performance of the estimator.
+    
+    The application contains a configuration file for setting the image resolution and sampling rates. In the experiments, we used 1280x720 resolution, 30 frames per second, and the IMU sampling frequencies of 200Hz for gyroscope and 400Hz for the accelerometer. However, due to RCARS input requirements, we downsample the accelerometer to match the gyroscope frequency.
+
+	
+	\subsection{Computer}
+	For running RCARS for estimation and MATLAB for evaluation, we primarily use the Lenovo Z580 laptop with Intel Core i7-3612QM 2.10GHz CPU and 8 GB of RAM.  In addition, for faster processing, we use a PC in the HCI laboratory with Intel(R) Core(TM) i7-8700 3.20GHz CPU and 32 GB of RAM.
+	
+	\subsection{RCARS}
+	To run RCARS, we downloaded a Ubuntu 14.04 LTS virtual machine accessible on Nootrix.com\footnote{\url{https://nootrix.com/diy-tutos/ros-indigo-virtual-machine/}}, which has already preinstalled ROS Indigo and ROS tools. We tried to run it on the newest Ubuntu 18.04 first, however, we had dependency issues and failed to do so, similarly to other users discussing on Bitbucket\footnote{\url{https://bitbucket.org/adrlab/rcars/issues/4/rcars_detector_node-cant-run}}. 
+    In this virtual machine, we installed RCARS according to the instructions in the project's repository \footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Home}}.
+
+\section{Datasets}
+As discussed in chapterX, the underwater conditions are simulated in two ways: by discarding the detected tags according to their distance from the camera, and by adding noise to the detected tag corners. 
+
+Each simulation is executed on three different datasets. In datasets 1\_cw and 2\_ccw, we walk slowly one time around the room clockwise and counter-clockwise, respectively; avoiding rapid changes in movement or orientation. Nevertheless, shake still occurs in the image due to walking. 
+
+In contrast, dataset 3\_random contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautions use occurs in unexperienced users not aware of the importance of minimizing motion blur and shake when using the device.
+
+All of these datasets are available in the attachments of this thesis. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
+
+FigX shows the error per sample for each dataset, which is 13 cm for 1\_cw, 21 cm for 2\_ccw, and 31cm for 3\_random. It seems quite a lot for an AR experience. The way the error occurs in the datasets differs. For example, while the error in 2\_ccw accumulates throughout the whole dataset, the error in 3\_random rapidly rises at a certain point due to a fast movement but then starts converging to its true position, which is disrupted by the subsequent outliers.
+
+\section{Results}
+\subsection{Distance threshold}
+\subsection{Added noise}
+
+\section{Future work}
+        
 
 \chapter{Conclusion}
 This thesis analyzed the underwater challenges of AR systems that are based on hybrid pose tracking and use Kalman filters for sensor fusion. First, the most popular motion tracking techniques were covered, and the Kalman filtering technique was explained. Then a solution suitable for underwater AR that uses fiducial markers and inertial measurements fused by the extended Kalman filter was chosen. Since this thesis focuses on smartphones, but the adopted solution is built for robots and runs only offline on the computer, the measurements of the smartphone had to be converted into an appropriate input format.
