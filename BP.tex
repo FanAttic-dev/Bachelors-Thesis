@@ -70,6 +70,7 @@
 \usepackage{floatrow} %% Putting captions above tables
 \floatsetup[table]{capposition=top}
 \begin{document}
+\renewcommand{\sectionautorefname}{Section}
 \chapter*{Introduction}
     \addcontentsline{toc}{chapter}{Introduction}
     The seabed is often called the biggest museum in the world. Thousands of shipwrecks, ancient flooded cities, and other structures form our underwater cultural heritage. Because many of these objects are deprived of their context when exhibited on land, some sites offer \textit{in situ} experience, where scuba divers have the chance to experience them in their original surroundings \cite{unesco}. 
@@ -199,10 +200,9 @@
 \chapter{Localization in a simulated underwater environment}
 The goal of this thesis is to choose a mobile, fiducial based, visual-inertial pose tracking system, and to evaluate its performance in underwater conditions. To be able to assess the tracking precision, the pose estimates have to be compared to ground truth. 
 
-For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-
--processing marker detection results.
+For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-processing marker detection results.
 
-In this chapter, section \ref{sec:pose_system} introduces the chosen underwater localization method, section explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
+In this chapter, \autoref{sec:pose_system} introduces the chosen underwater localization method, \autoref{sec:simulating} section explains how the low visibility conditions are simulated, and \autoref{sec:evaluation} describes how the accuracy of the localization is evaluated.
 
 \section{Pose estimation system}
 \label{sec:pose_system}
@@ -236,7 +236,9 @@ In addition, besides using square fiducial markers, the system should be complet
 
     The estimator realizes the Kalman filtering. It subscribes to the detected markers and the inertial measurements, and uses them for estimating the pose of the device, as well as the extrinsic calibration between the IMU and the camera. 
  
-    The visualizer uses \texttt{rviz}\footnote{\url{http://wiki.ros.org/rviz}} for a 3D visualization of the workspace, as well as an image preview. As seen in Fig.X, the image preview shows both the tag corner detections (in blue) and their corresponding estimations (in red). This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
+    The visualizer uses \texttt{rviz}\footnote{\url{http://wiki.ros.org/rviz}} for a 3D visualization of the workspace, as well as an image preview. As seen in Fig.X, the image preview shows the tag corner detections and their corresponding estimations separately. The \texttt{rviz} tool is useful for analyzing the estimation process and identifying the cases when outliers occur.
+    
+    \missingfigure[figwidth=10cm]{Rviz}
     
     \section{Utilizing RCARS}
     The drawback of RCARS is that it runs only on a computer. Thus, the pose estimation cannot be realized online on the Android smartphone used in this thesis, which leads to a series of steps that need to be done to be taken in order to obtain the pose estimates from RCARS. This workflow is depicted in Fig.X
@@ -278,13 +280,12 @@ In addition, besides using square fiducial markers, the system should be complet
     
     The estimator then finally publishes the pose estimates of the device (\texttt{filterPose} topic) and all tags (\texttt{tagsInertialFrame} topic) in the filter frame. 
     
-    The coordinate frames used in RCARS can be identified in \textit{rviz} that provides a 3D visualization of the workspace. As shown in Fig.X, the estimator works with different coordinate systems for the workspace, IMU, camera, and each tag. The origin of the workspace frame is set at the time of the estimator initialization, i.e., when it starts receiving the smartphone measurements. This frame assumes that the gravity points in negative z-direction.
-    
-    \missingfigure[figwidth=10cm]{Coordinate frames}
+    The estimator then finally publishes the topic \textit{/rcars/filterPose} that contains the pose estimates of the device and all tags. Using rviz, we observe the estimation process and adjust the EKF parameters if needed. RCARS uses several coordinate frames described in \autoref{sec:coords}.
     
     We then record the topics from the estimator that we are interested in again into a bag file. Consequently, this bag is converted into the csv\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format, which is analyzed in MATLAB in the evaluation section, see \ref{sec:evaluation}.
 
 \section{Simulating underwater environments}
+\label{sec:simulating}
 This thesis aims at evaluating decreased visibility conditions of underwater environments. In marine terms, visibility is an estimation of water clarity and is defined as the distance a diver can see horizontally \cite{visibility}. There are several factors affecting the visibility; for example, light attenuation and scattering between the object and the viewer result in lower contrast and blur in the image. The visibility can also be severely decreased by suspended particles of sand, mud, clay, or other bottom sediments.
 
 However, these conditions are difficult to imitate in the laboratory. Thus, we record the datasets in full visibility and then modify the detection results by adding several steps in our pose estimation workflow. This section describes the two underwater conditions simulated in this thesis: short-range visibility (\ref{sec:threshold}) and water turbidity (\ref{sec:noise}).
@@ -318,6 +319,77 @@ However, these conditions are difficult to imitate in the laboratory. Thus, we r
 
 \section{Evaluation method}
 \label{sec:evaluation}
+We evaluate the accuracy of the RCARS pose estimation by computing the Euclidean distance between the 3D position of the smartphone estimated by RCARS and the position measured by the motion capture (mocap). 
+This section describes the evaluation method used in this thesis.
+ 
+For data analysis and plotting, we use MATLAB. Thus, we wrote several MATLAB scripts to load the CSV files containing the pose estimates.
+ 
+The filter and the mocap are two independent systems that do not communicate with each other. To be able to compare them, their coordinate frames have to be aligned and their samples synchronized. When this is not done correctly, it leads to bias in error calculations.
+
+
+    \subsection{Coordinate frames}
+    \label{sec:coords}
+    For alignment, the goal is to find a common coordinate frame for RCARS and the mocap. There are several coordinate frames used in these systems:
+    
+    \todo[inline]{Coordinate frame pictures}
+    \begin{itemize}
+        \item Mocap
+        \begin{itemize}
+            \item world\_mocap: The laboratory.
+            \item tag\_mocap: The tag rigid body, will serve as a reference frame.
+            \item phone\_mocap: The phone rig.
+        \end{itemize}
+        \item RCARS
+        \begin{itemize}
+            \item world\_RCARS: This frame is initialized when RCARS starts receiving messages.
+            \item tag\_RCARS: The frame of the reference tag.
+            \item camera\_RCARS: This frame is used by the detector, which determines the immediate pose of the tag; as well as the estimator, which instead of using the pose from the detector it uses the corner locations in pixel coordinates that are transformed into this frame and the filter further estimates their pose here.
+            \item IMU\_RCARS: The IMU measures in this frame.
+        \end{itemize}
+    \end{itemize}
+    
+    In our method, we select a reference tag as the common coordinate frame. In the case of the mocap, we create a rigid body for this tag and transform the smartphone pose measurements into the local coordinate frame of the marker as follows:
+    \begin{equation}
+        \label{eq:mocapTransform}
+        phone_{mocap}^W * (tag_{mocap}^W)^{-1} = phone_{mocap}^{T} 
+    \end{equation}
+    \todo{Indexes}
+
+    This process is similar for RCARS, where we start recording the dataset with the camera pointing at the reference tag and then use it to transform all pose estimates from the RCARS global frame into the local frame of the tag:
+
+    \begin{equation}
+        phone_{RCARS}^W * (tag_{RCARS}^W)^{-1} = phone_{RCARS}^{T}
+    \end{equation}
+
+    For also aligning the orientation, the marker has to be placed in the laboratory in a way that its mocap rigid body axes are the same as the RCARS tag axes to ensure pitch, yaw, and roll consistency. Provided proper marker placement, the orientation can be aligned by including the rotation matrix of the tag in the transformation matrix in \autoref{eq:mocapTransform}.
+
+\section{Time synchronization}
+    \label{sec:time_sync}
+    After the poses from RCARS and mocap are aligned into a common coordinate frame, they have to be synchronized based on time. 
+ 
+    It is assumed that the mocap dataset is always longer than the phone recording because, in our experiments, the recording on the mocap controller computer is started by the same person as the smartphone recording. Therefore, there is always a few second delay while the person moves to the initial position and starts recording on the smartphone. This is shown in Fig.X, where the recording on the smartphone was started 11 seconds after the mocap.
+    
+    \missingfigure[figwidth=10cm]{Delayed position}
+    
+    Since there is no grouping element in the CSV files of mocap and RCARS, we compute the cross-correlation between the positions in a given axis to find the count of samples that the mocap is ahead of RCARS. The choice of the axis depends on the range of motion in the dataset. From our tests, we prefer to use the x- or y-axis, since they are usually better estimated than the z-axis representing the height.
+
+    Also, we found that the region for cross-correlation computing should not be the whole dataset but only the first few seconds. This is because we start the dataset recording with the camera pointing at the reference tag; therefore, even in the case when the filter is diverging, the error should be zero at the beginning and increase over time. Another case when taking only the beginning of the dataset is necessary is shown in Fig.X, where a gradually increasing delay in the dataset causes the cross-correlation to be maximum for the alignment of the second half of the dataset as a global optimum. By computing the cross-correlation only from the beginning of the dataset, we ensure that we find the initial alignment, not a global optimum.
+
+    \missingfigure[figwidth=10cm]{Increasing delay}
+
+\section{Error computation}
+\label{sec:error}
+    When the positions are aligned and synchronized, the error can be finally obtained by computing the Euclidean distance between them as follows:
+    
+    \begin{equation}
+        error = \sqrt{(mocap.x - RCARS.x)^2 + (mocap.y - RCARS.y)^2 + (mocap.z - RCARS.z)^2}
+    \end{equation}
+
+    The result is demonstrated on an example dataset in Fig.X, where the estimated pose is diverging from the ground truth, causing an increasing error over time.
+    
+    \missingfigure[figwidth=10cm]{Error per frame}
+    
+    To evaluate the decreased visibility effects on the pose estimation, we run the estimator on many different thresholds and noise-corrupted detections, as shown in Fig.X. These estimates are then joined in one plot showing the mean error per sample for a given threshold or noise standard deviation.
 
 \chapter{Experiment}
 \section{Setup}
@@ -377,8 +449,10 @@ Calibration and bias free comparison is essential for our experiment. This secti
     
     \subsection{Motion capture to filter estimation}
     As proposed in chapterX, the poses have to be aligned according to a common origin to be able to compare the poses measured by the motion capture and the filter. In this case, the origin is set to be the AprilTag with id 1.
+    
     For position, we tackle the alignment as follows. The tag frame origin of the detected tag in OpenCV is in its geometrical center. Also, when a rigid body is created in Motive, its pivot point is placed at its geometric center. Thus, for tracking of the tag with motion capture, the reflective markers are placed onto the four corners of the tag, and a rigid body is created consequently. This way, we ensure that the origin of the marker pose is the same for both RCARS and motion capture.
-    To be able also to compare the orientation of the mocap and the filter, we take the orientation in the filter as a reference. When OpenCV detects the tag, the tag is assigned orientation axes as shown in Fig.X. The axes of the camera are aligned with the tag when the phone is laying flat on the tag with the camera on top. Thus, initializing the axes for the tag and the phone, in the same way, allows us to also compare the orientation of the mocap measurements and the filter estimates.
+    
+    To be able also to compare the orientation of the mocap and the filter, we take the orientation in the filter as a reference. When OpenCV detects the tag, the tag is assigned orientation axes as shown in Fig.X. The axes of the camera are aligned with the tag when the phone is laying flat on the tag with the camera on top. Thus, initializing the axes for the tag and the phone in the same way, allows us to also compare the orientation of the mocap measurements and the filter estimates.T
     
     \begin{figure}
         \includegraphics[width=8cm]{example-image}
@@ -406,9 +480,9 @@ As discussed in chapterX, the underwater conditions are simulated in two ways: b
 
 Each simulation is executed on three different datasets. In datasets 1\_cw and 2\_ccw, we walk slowly one time around the room clockwise and counter-clockwise, respectively; avoiding rapid changes in movement or orientation. Nevertheless, shake still occurs in the image due to walking. 
 
-In contrast, dataset 3\_random contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautions use occurs in unexperienced users not aware of the importance of minimizing motion blur and shake when using the device.
+In contrast, dataset 3\_random contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautious use occurs by inexperienced users not aware of the importance of minimizing motion blur and shake when using the device.
 
-All of these datasets are available in the attachments of this thesis. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
+All of these datasets are available in the attachment of this thesis. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
 
 FigX shows the error per sample for each dataset, which is 13 cm for 1\_cw, 21 cm for 2\_ccw, and 31cm for 3\_random. It seems quite a lot for an AR experience. The way the error occurs in the datasets differs. For example, while the error in 2\_ccw accumulates throughout the whole dataset, the error in 3\_random rapidly rises at a certain point due to a fast movement but then starts converging to its true position, which is disrupted by the subsequent outliers.
 
