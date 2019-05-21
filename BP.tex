@@ -202,77 +202,122 @@ The goal of this thesis is to choose a mobile, fiducial based, visual-inertial p
 For position and orientation tracking, ground truth is typically represented by an external motion capture system with submillimeter accuracy \cite{15Neunert}. However, this system can only be installed in a controlled environment of a laboratory and cannot be used in the sea. Thus, the experiments in this thesis are conducted in the laboratory equipped with a motion capture system, and the underwater conditions are simulated by post-
 -processing marker detection results.
 
-In this chapter, Section 2.1 \todo{Sectioning} introduces the chosen underwater localization method, Section 2.2 explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
+In this chapter, section \ref{sec:pose_system} introduces the chosen underwater localization method, section explains how the low visibility conditions are simulated, and Section 2.3 describes how the accuracy of the localization is evaluated.
 
 \section{Pose estimation system}
+\label{sec:pose_system}
 When choosing a suitable solution for underwater localization in the context of this thesis, various constraints have to be taken into account. As discussed in \ref{sec:underwater_pose_estimation}, some sensors, for example, GPS or magnetometers, are not suitable for underwater use, which already discards a large number of implemented localization systems found in the literature. 
  
-In addition, besides using square fiducial markers, the system should be completely self-contained, i.e., not relying on any external equipment, such as acoustic positioning systems extensively used under water.
+In addition, besides using square fiducial markers, the system should be completely self-contained, i.e., not relying on any external equipment often used under water \cite{14Paull}, such as acoustic positioning systems.
 
 
     \subsection{RCARS}
-    Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. \textbf{RCARS} (Robot-Centric Absolute Reference System) is a fiducial-based, visual-inertial EKF-SLAM state estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which allows the system to be lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
-
-    RCARS is built on the Robot Operating System (ROS) software interface. ROS\footnote{\url{https://www.ros.org/}} is an open-source, robotics middleware for creating robot applications. It provides services such as hardware abstraction, device drivers, libraries, visualizers, message-passing, and package management. 
+    Although we did not find any mobile pose tracking system customized for underwater use at the time of our related work research, we found a suitable open source solution from the field of robotics. 
     
-    ROS-based processes are represented as nodes in a graph architecture, connected by edges called topics. Topics are \textit{buses} over which nodes send and receive messages. To send a message, a node must publish to a topic, while to receive messages it must subscribe. The types of messages passed on a topic vary widely and can be user-defined. The content of these messages can be sensor data, motor control commands, state information, actuator commands, or anything else.
+    \textbf{RCARS} (Robot-Centric Absolute Reference System) is a fiducial-based, visual-inertial EKF-SLAM state estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which makes the system more lightweight. Moreover, they state that the system provides accurate estimates and is robust against fast motions and changing lighting conditions.
+
+    \subsection{ROS}
+    RCARS is built on the Robot Operating System\footnote{\url{https://www.ros.org/}} (ROS) software interface. ROS is an open-source, robotics middleware for creating robot applications. It provides services such as hardware abstraction, device drivers, libraries, visualizers, message-passing, and package management. 
+    
+    ROS-based processes are represented as \textit{nodes} in a graph architecture, connected by edges called \textit{topics}. Topics are buses over which nodes send and receive messages. To send a message, a node must \textit{publish} to a topic, while to receive messages it must \textit{subscribe}. The types of messages passed on a topic vary widely and can be user-defined. The content of these messages can be sensor data, motor control commands, state information, actuator commands, or anything else.
     
     \missingfigure[figwidth=10cm]{RCARS nodes}
     
-    The RCARS the software structure \footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Software_Structure}}, generated by the \texttt{rqt\_graph} tool, is visualized in Fig. X. RCARS operates on three nodes - the estimator, the detector, and the visualizer - and the topics passed between them are, for example, the image (\texttt{/cam0/image\_raw}), the IMU measurements (\texttt{/imu0}), or the detected tags (\texttt{/rcars/detector/tags}).
+    \subsection{RCARS packages}
+    The RCARS the software structure\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Software_Structure}}, generated by the \texttt{rqt\_graph} tool, is visualized in Fig. X. RCARS operates on three nodes --- the estimator, the detector, and the visualizer --- and the topics passed between them are, for example, the image (\texttt{/cam0/image\_raw}), the IMU measurements (\texttt{/imu0}), or the detected tags (\texttt{/rcars/detector/tags}).
     
     \missingfigure[figwidth=10cm]{RCARS visualizer}
 
-    The detector detects markers in the received undistorted images and publishes marker information, such as the marker id, the locations of its four corners in the image coordinates, or also the location of the marker with respect to the camera. RCARS uses AprilTags as markers, shown in Fig.X, which are 2-dimensional, square printable markers with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
+    The detector detects markers in the received undistorted images and publishes marker information, such as the marker id, the marker pose with recpect to camera, or the locations of its four corners in the image coordinates. 
+    
+    RCARS uses AprilTags as markers, shown in Fig.X, which are 2-dimensional, square printable markers with a unique identification number. As a result, they can be robustly tracked and estimated in the EKF. As Neunert et al. reason, AprilTags are used in RCARS due to their high accuracy and the numerous available detector implementations in C/C++. They also state that with AprilTags, high accuracy tracking is achievable even with very few tags, resulting in lower computational demands.
     
     \missingfigure[figwidth=10cm]{AprilTag}
 
     The estimator realizes the Kalman filtering. It subscribes to the detected markers and the inertial measurements, and uses them for estimating the pose of the device, as well as the extrinsic calibration between the IMU and the camera. 
  
-    The visualizer uses \texttt{rviz}\footnote{\url{http://wiki.ros.org/rviz}} for a 3D visualization of the workspace, as well as an image preview. As seen in Fig.X, the image preview shows the tag corner detections and their corresponding estimations separately. This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
+    The visualizer uses \texttt{rviz}\footnote{\url{http://wiki.ros.org/rviz}} for a 3D visualization of the workspace, as well as an image preview. As seen in Fig.X, the image preview shows both the tag corner detections (in blue) and their corresponding estimations (in red). This information is useful for analyzing the estimation process, particularly for identifying the cases when outliers occur.
     
-    \subsection{Utilizing RCARS}
-    The drawback of RCARS is that it runs only on a computer. Thus, the pose estimation cannot be realized online on the Android smartphone used in this thesis, which leads to a series of steps that need to be done to utilize RCARS. This workflow is shown in Fig.X
+    \section{Utilizing RCARS}
+    The drawback of RCARS is that it runs only on a computer. Thus, the pose estimation cannot be realized online on the Android smartphone used in this thesis, which leads to a series of steps that need to be done to be taken in order to obtain the pose estimates from RCARS. This workflow is depicted in Fig.X
     
-    \missingfigure[figwidth=10cm]{Workflow}
+    \missingfigure[figwidth=10cm, figheight=10cm]{Workflow}
     
-    First, we have to transform the measurements from the smartphone into proper input data for ROS and RCARS. ROS provides packages\footnote{\url{http://wiki.ros.org/rosserial}} for communication with the serial ports of electronic devices connected to the computer, which allow live sending of data to ROS; however, these packages are built mainly for microcontrollers such as Arduino. Although there is a driver\footnote{\url{http://wiki.ros.org/android_sensors_driver}} also for wireless communication with Android devices, it supports only sending GPS and IMU measurements, not the camera images that are needed here.
+    \subsection{Input data}
+    First, the measurements from the smartphone have to be set as input for RCARS. ROS provides packages\footnote{\url{http://wiki.ros.org/rosserial}} for communication with the serial ports of electronic devices connected to the computer, allowing live sending of data to ROS; however, these packages are built mainly for microcontrollers such as Arduino. Although there is also a driver\footnote{\url{http://wiki.ros.org/android_sensors_driver}} for a  wireless communication with Android devices, it supports only sending GPS and IMU measurements, not the camera images that are needed here.
 
-    Therefore, in our experiment, we first need to record the datasets and then transfer the image and the IMU measurements to ROS in a proper format. The recording is realized by the iMareCameraRecorder application developed by Jan Čejka for the AR systems research within the iMareCulture project. This application provides recording of uncompressed, time-stamped images and IMU measurements.
+    Therefore, in our experiment, we first need to record the datasets and then convert the image and the IMU measurements to into a proper input format to allow sending them within the ROS ecosystem. 
+    
+    The recording is realized by the iMareCameraRecorder application developed by Jan Čejka for the AR systems research within the project iMareCulture. This application allows recording of uncompressed, time-stamped images and IMU measurements.
 
-    This data needs to be converted into a bag file to run RCARS on it. The bag\footnote{\url{http://wiki.ros.org/Bags}} is a file format for storing ROS message data. The conversion is realized by the \texttt{phone2bag.py} Python script that uses the rosbag Python API\footnote{\url{http://wiki.ros.org/rosbag/Code\%20API\#py_api}} to write into a bag file. The bag file contains the following topics:
+    To run RCARS on these measurements, they are saved into a \textit{bag}\footnote{\url{http://wiki.ros.org/Bags}} file as ROS \textit{messages}. The \textit{bag} is a file format for storing ROS message data. The conversion is realized by the \texttt{phone\_to\_bag.py} Python script that uses the \textit{rosbag} Python API\footnote{\url{http://wiki.ros.org/rosbag/Code\%20API\#py_api}} to write into a \textit{bag} file. The \textit{messages} are stored in this file in the following \textit{topics}:
     \begin{description}
         \item [\textbf{camera\_info}] holds the camera metadata, such as the intrinsic calibration parameters or the image resolution;
         \item [\textbf{image\_raw}] holds the raw camera images;
         \item [\textbf{imu}] holds the accelerometer and gyroscope measurements.
     \end{description}
 	
-    The script uses the logged timestamps for synchronizing the IMU with the images. Note that RCARS allows using only one sampling rate for the IMU measurements. In our case, since the iMareCameraRecorder records the accelerometer at 400Hz and the gyroscope at 200Hz, we downsampled the accelerometer measurements to 200Hz to be synchronized with the gyroscope. In addition, we use the rosbag\footnote{\url{http://wiki.ros.org/rosbag}} tools for recording and playing back bag files. 
+    The script synchronizes the IMU with the images based on the their timestamps. Note that RCARS allows using only one sampling frequency for the IMU measurements. For example, in the case of the iMareCameraRecorder, even though it records the accelerometer at 400Hz and the gyroscope at 200Hz, the accelerometer had to be downsampled to 200Hz to match the frequency of the gyroscope. In addition, we use the \textit{rosbag}\footnote{\url{http://wiki.ros.org/rosbag}} tools for recording and playing back bag files.
 
-    When the bag files are prepared, we play them with rosbag. When the bag file is being played, it appears to RCARS as if there was a live stream of data from a device, which finally allows us to use it.
+    When the bag files are prepared, we play them with rosbag. When the bag file is being played, it appears to RCARS as if there was a live stream of data from a device, which finally allows us to RCARS on our data.
     
-    First, as shown in Fig.X, the integrated ROS image processing node\footnote{\url{http://wiki.ros.org/image_proc}} undistorts the raw image using the intrinsic camera calibration parameters in the \texttt{camera\_info} topic.
+    \subsection{Detection}
+    First, as shown in our workflow in Fig.X, the integrated ROS image processing node\footnote{\url{http://wiki.ros.org/image_proc}} undistorts the raw image using the intrinsic camera calibration parameters in the \texttt{camera\_info} topic.
 
-    Second, these undistorted images, as well as the IMU measurements, proceed to the estimator node. The estimator provides a configuration file \texttt{EKFSettings.info}\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Configuration}} that allows customizing the EKF parameters to our device. Since configuring an EKF is not trivial and requires some experience, we left most of the parameters on default. However, since Neunert et al. use the specialized Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}}, there are parameters that have to be changed because we use a different device:
+    \subsection{Estimation}
+    Second, these undistorted images, as well as the IMU measurements, proceed to the estimator node. The estimator provides a configuration file \texttt{EKFSettings.info}\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Configuration}} that allows customizing the EKF parameters to our device. Since configuring an EKF is not trivial and requires some experience, we left most of the parameters on default. 
+    
+    However, since the device Neunert et al. \cite{15Neunert} use is the specialized Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}}, there are parameters that have to be changed because we are using a different device:
     \begin{enumerate}
         \item the extrinsic calibration between the IMU and the camera;
         \item the squared pixel standard deviation of the tag corner detection results;
-        \item the Mahalonobis threshold defining when a marker is considered an outlier.
+        \item and the Mahalonobis threshold defining when a marker is considered an outlier.
     \end{enumerate}
 	
-    Enough time should be devoted to determining these values for the device, because they are critical for the estimator to work correctly. Also note that the VI-Sensor, used in the orignal paper \cite{15Neunert}, provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. Therefore, it is not expected from the smartphone to provide such accurate and robust pose estimates as the authors achieved. 
+    Enough time should be devoted to determining these values for the device, because they are critical for the estimator to work correctly. Also note that the VI-Sensor,  provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. Therefore, we do not expect from the smartphone to perform in our experiments with such accuracy and robustness as the authors achieved.
     
-    The estimator then finally publishes the topic \texttt{/rcars/filterPose} that contains the pose estimates of the device and all tags. For working with these estimates, we identify the filter coordinate frames using the rviz tool that provides a 3D visualization of our workspace. As shown in Fig.X, the estimator works with different coordinate systems for the workspace, IMU, camera, and each tag. The origin of the workspace frame is set at the estimator initialization, i.e., when it starts receiving the smartphone measurements. This frame assumes that the gravity points in negative z-direction.
+    The estimator then finally publishes the pose estimates of the device (\texttt{filterPose} topic) and all tags (\texttt{tagsInertialFrame} topic) in the filter frame. 
+    
+    The coordinate frames used in RCARS can be identified in \textit{rviz} that provides a 3D visualization of the workspace. As shown in Fig.X, the estimator works with different coordinate systems for the workspace, IMU, camera, and each tag. The origin of the workspace frame is set at the time of the estimator initialization, i.e., when it starts receiving the smartphone measurements. This frame assumes that the gravity points in negative z-direction.
     
     \missingfigure[figwidth=10cm]{Coordinate frames}
     
     We then record the topics from the estimator that we are interested in again into a bag file. Consequently, this bag is converted into the csv\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format, which is analyzed in MATLAB in the evaluation section, see \ref{sec:evaluation}.
 
 \section{Simulating underwater environments}
+This thesis aims at evaluating decreased visibility conditions of underwater environments. In marine terms, visibility is an estimation of water clarity and is defined as the distance a diver can see horizontally \cite{visibility}. There are several factors affecting the visibility; for example, light attenuation and scattering between the object and the viewer result in lower contrast and blur in the image. The visibility can also be severely decreased by suspended particles of sand, mud, clay, or other bottom sediments.
 
-\section{Evaluation}
+However, these conditions are difficult to imitate in the laboratory. Thus, we record the datasets in full visibility and then modify the detection results by adding several steps in our pose estimation workflow. This section describes the two underwater conditions simulated in this thesis: short-range visibility (\ref{sec:threshold}) and water turbidity (\ref{sec:noise}).
+
+    \subsection{Distance threshold}
+    \label{sec:threshold}
+    This simulation assumes that after a certain distance threshold, no markers are visible in the image. We realize this as follows.
+    
+    First, the detector detects all tags in the raw image, which corresponds to the full visibility conditions and serves as a reference for comparison in the evaluation section. The detection results are then saved in a bag file named \textttt{<dataset>\_tags.bag}.
+    
+    Second, the Python script \textttt{threshold.py} takes this bag file and discards the markers further away from the camera than a given threshold. This is achieved by comparing the threshold to the z-coordinate of the marker pose relative to the camera. We also consider a linear falloff distance of one meter for discarding the markers. FigX shows an example with a threshold of 3 meters, where tags closer to the camera than 2 meters remain in the bag, tags at 2.5 meters have a 50 \% chance of being discarded, and all tags 3 or more meters far are discarded.
+    
+    \begin{figure}
+        \includegraphics[width=12cm]{img/falloff.eps}
+        \caption{Falloff}
+        \label{fig:falloff}
+    \end{figure}
+    
+    Finally, the threshold.py script outputs a bag file named \\ \textttt{<dataset>\_<threshold>\_tags.bag}, which is then sent to the estimator that outputs the pose estimates in low visibility into a bag file named \texttt{<dataset>\_<threshold>\_est.bag}.
+    
+    \subsection{Adding noise}
+    \label{sec:noise}
+    The second simulation assumes that there are floating particles in the water that bring noise into tag corner detection. We simulate this by corrupting the tag corner detections by random noise of a given variance. We are using the fact that the EKF in RCARS uses the tag corner detections as observations rather than the tag pose obtained by OpenCV. As a result of this holistic approach, we can improve the tracking by changing the PixelStd parameter in the EKFSettings.info file. The PixelStd parameter represents the pixel variance (the squared pixel standard deviation) of the tag corner detections.
+    
+    In full visibility, we use a pixel variance of 25 pixels. After adding noise to the corners, we raise this variance accordingly. For example, for noise with variance of 100 pixels, we set the "PixelStd" parameter to 125.
+    
+    The workflow is similar to the thresholding. First, we obtain the \textttt{<dataset>\_tags.bag} file with full visibility from the detector. Second, the \textttt{add\_noise.py} script adds random noise with Gaussian distribution with zero mean and a given standard deviation. It uses the pseudo-random number generators Python module random\footnote{\url{https://docs.python.org/2/library/random.html}} with a seed 250. Finally, a file named \\ \textttt{<dataset>\_<standard\_deviation>px\_<PixelStd\_parameter\_value>\_tags.bag} is output, which is then processed by the estimator to obtain the pose estimates in the file \\
+    \textttt{<dataset>\_<standard\_deviation>px\_<PixelStd\_parameter\_value>\_est.bag}.
+
+
+
+\section{Evaluation method}
 \label{sec:evaluation}
-\se
 
 \chapter{Experiment}
 \section{Setup}
