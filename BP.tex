@@ -1,5 +1,5 @@
 \documentclass[
-  printed, %% This option enables the default options for the
+  digital, %% This option enables the default options for the
            %% digital version of a document. Replace with `printed`
            %% to enable the default options for the printed version
            %% of a document.
@@ -11,9 +11,9 @@
            %% at your faculty.
   table,   %% This option causes the coloring of tables. Replace
            %% with `notable` to restore plain LaTeX tables.
-  nolof,     %% This option prints the List of Figures. Replace with
+  lof,     %% This option prints the List of Figures. Replace with
            %% `nolof` to hide the List of Figures.
-  nolot,     %% This option prints the List of Tables. Replace with
+  lot,     %% This option prints the List of Tables. Replace with
            %% `nolot` to hide the List of Tables.
   %% More options are listed in the user guide at
   %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
@@ -278,9 +278,7 @@ In addition, besides using square fiducial markers, the system should be complet
 	
     Enough time should be devoted to determining these values for the device, because they are critical for the estimator to work correctly. Also note that the VI-Sensor,  provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. Therefore, we do not expect from the smartphone to perform in our experiments with such accuracy and robustness as the authors achieved.
     
-    The estimator then finally publishes the pose estimates of the device (\texttt{filterPose} topic) and all tags (\texttt{tagsInertialFrame} topic) in the filter frame. 
-    
-    The estimator then finally publishes the topic \textit{/rcars/filterPose} that contains the pose estimates of the device and all tags. Using rviz, we observe the estimation process and adjust the EKF parameters if needed. RCARS uses several coordinate frames described in \autoref{sec:coords}.
+    The estimator then finally publishes the topic \textit{/rcars/filterPose} that contains the pose estimates of the device and all tags (\texttt{tagsInertialFrame} topic). Using rviz, we observe the estimation process and adjust the EKF parameters if needed. RCARS uses several coordinate frames described in \autoref{sec:coords}.
     
     We then record the topics from the estimator that we are interested in again into a bag file. Consequently, this bag is converted into the csv\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format, which is analyzed in MATLAB in the evaluation section, see \ref{sec:evaluation}.
 
@@ -473,25 +471,110 @@ Calibration and bias free comparison is essential for our experiment. This secti
 	
 	\subsection{RCARS}
 	To run RCARS, we downloaded a Ubuntu 14.04 LTS virtual machine accessible on Nootrix.com\footnote{\url{https://nootrix.com/diy-tutos/ros-indigo-virtual-machine/}}, which has already preinstalled ROS Indigo and ROS tools. We tried to run it on the newest Ubuntu 18.04 first, however, we had dependency issues and failed to do so, similarly to other users discussing on Bitbucket\footnote{\url{https://bitbucket.org/adrlab/rcars/issues/4/rcars_detector_node-cant-run}}. 
-    In this virtual machine, we installed RCARS according to the instructions in the project's repository \footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Home}}.
+    On this virtual machine, we installed RCARS according to the instructions in the project's repository\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Home}}.
+	Since we are recording our datasets in HD resolution, working with a large amount of markers, and running RCARS on a virtual machine, we run the detector first, save the detection results, and then run the estimator separately. Moreover, we play all bag files in slower speed to lower the computational demands and ensure the best detection and estimation possible.
 
 \section{Datasets}
-As discussed in chapterX, the underwater conditions are simulated in two ways: by discarding the detected tags according to their distance from the camera, and by adding noise to the detected tag corners. 
+As discussed in \autoref{sec:simulating}, the underwater conditions are simulated in two ways: by discarding the detected tags according to their distance from the camera, and by adding noise to the detected tag corners.
+ 
+Each simulation is executed on three different datasets: \textit{1CW}, \textit{2CCW}, and \textit{3RAND}. Figures \ref{fig:dataset06}, \ref{fig:dataset07}, and \ref{fig:dataset08} show the 2D and 3D trajectories of both the filter estimation and the mocap measurements, as well as the error per frame for each dataset. All of these datasets are available in the attachments of this thesis, including the bag files with the recordings, the motion capture CSV files, and the estimated CSV files. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
 
-Each simulation is executed on three different datasets. In datasets 1\_cw and 2\_ccw, we walk slowly one time around the room clockwise and counter-clockwise, respectively; avoiding rapid changes in movement or orientation. Nevertheless, shake still occurs in the image due to walking. 
+\todo[inline]{Show all datasets? If yes, which plots?}
 
-In contrast, dataset 3\_random contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautious use occurs by inexperienced users not aware of the importance of minimizing motion blur and shake when using the device.
+In datasets \textit{1CW} and \textit{2CCW}, we walk slowly one time around the room clockwise and counter-clockwise, respectively, avoiding rapid changes in movement or orientation; nevertheless, shake still occurs in the image due to walking. 
 
-All of these datasets are available in the attachment of this thesis. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
+Dataset \textit{3RAND} contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautions use occurs when the system is used by inexperienced users, not aware of the importance of minimizing motion blur and shake.
 
-FigX shows the error per sample for each dataset, which is 13 cm for 1\_cw, 21 cm for 2\_ccw, and 31cm for 3\_random. It seems quite a lot for an AR experience. The way the error occurs in the datasets differs. For example, while the error in 2\_ccw accumulates throughout the whole dataset, the error in 3\_random rapidly rises at a certain point due to a fast movement but then starts converging to its true position, which is disrupted by the subsequent outliers.
+The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and for \textit{3RAND} is 32~cm. The way the error occurs in the datasets differs; for example, while the error in \textit{2CCW} accumulates throughout the whole dataset, the error in \textit{3RAND} jumps at a certain point due to a fast movement, but then starts converging to its true position, which is again disrupted by the subsequent outliers.
+
+\begin{figure}
+    \includegraphics[width=12cm]{img/Dataset06.png}
+    \caption{Dataset \textit{1CW}}
+    \label{fig:dataset06}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=12cm]{img/Dataset07.png}
+    \caption{Dataset \textit{2CCW}}
+    \label{fig:dataset07}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=12cm]{img/Dataset08.png}
+    \caption{Dataset \textit{3RAND}}
+    \label{fig:dataset08}
+\end{figure}
+
 
 \section{Results}
-\subsection{Distance threshold}
-\subsection{Added noise}
-
+    
+    \subsection{Distance threshold}
+    We estimated a number of thresholds in the interval from 1.5 to 5~m, focusing primarily on the thresholds below 3~m; thus, the thresholds are denser in the interval from 1.5 to 3~m, with an offset of 10~cm, while the more distant thresholds than 3 meters are estimated every 20~cm. This subsection gives commentary to the results.
+    
+    \subsubsection{Same errors, different plots}
+    By decreasing the distance threshold, the count of detected images also decreases. When there is no image detected, the estimations are based only on the inertial measurements, and therefore the filter starts drifting away. This is shown in \autoref{fig:07_drift} for the dataset \textit{2CCW} --- even though the error at 1.8~m is lower than at 2.4~m by almost 5~cm, there is a significant difference in the estimation process, and thus also in the AR experience. While at 2.4~m the error accumulates gradually, at 1.8~m the filter starts diverging several times and jumps back near its true position when a marker is detected.
+    
+    \begin{figure}
+        \includegraphics[width=12cm]{img/07_drift.png}
+        \caption{Similar error, different estimation}
+        \label{fig:07_drift}
+    \end{figure}
+    
+    \subsubsection{Mean error per threshold}
+    \autoref{fig:mean_error__per_threshold} shows the mean error per threshold for each dataset. Although we expected that with decreasing threshold, the error would gradually rise, the results do not fully follow this inverse proportionality.
+    
+    \begin{figure}
+        \includegraphics[width=12cm]{img/thresholds.png}
+        \caption{Mean error per threshold plots for each dataset.}
+        \label{fig:mean_error__per_threshold}
+    \end{figure}
+    
+    Instead, every dataset contains a threshold below 3~m where an outlier occurs, i.e., where the error significantly lower than the error in the neighboring thresholds. What is more, the errors of these outliers are at times as low or even lower than in 100~\% visibility, resulting in the peaks shown in FigX. For example, in the case of the dataset 1CW, where the mean error per sample at full visibility is 14~cm, but at 2.5~m is only 9~cm. For the dataset \textit{2CCW}, this occurs at the threshold of 2.2~m, with a 1~cm lower error than in the full visibility estimate.
+    
+    To verify that the peaks are not caused by the detector or estimator running too fast, we executed both the detection and estimation repeatedly on slower speeds and different computers. However, the results still stay the same.
+    
+    \subsubsection{Minimum threshold}
+    With the threshold below 2~m, the estimation in all datasets often diverges by tens of meters. \autoref{fig:low_thresholds} contains plots showing the errors per frame in low thresholds for all datasets.
+    
+    \begin{figure}
+        \includegraphics[width=12cm]{img/low_thresholds.png}
+        \caption{Errors per frame in low thresholds}
+        \label{fig:low_thresholds}
+    \end{figure}
+    
+    We are interested in finding a minimum threshold where the tracking still reaches similar accuracy to the tracking in higher visibility. If the minimum threshold is taken from the mean error per threshold in \autoref{fig:mean_error__per_threshold}, \autoref{tab:edge_thresholds} shows the result, along with the average number of tags detected per frame in the estimation. The results indicate that at the visibility below 2.2 m, frequent marker detection losses occur, which causes the pose to diverge. This drift also happens when there is no marker detected in more than one image out of four.
+    
+    \begin{center}
+        \begin{table}
+            \begin{tabular}{l|lll}
+                \toprule
+                & 1CW & 2CCW & 3RAND \\
+                \midrule
+                Threshold (m) & 2.2 & 2.2 & 2.5 \\
+                Average detected tags & 0.7864 & 0.7453 & 0.6071 \\
+                \bottomrule
+            \end{tabular}
+            \caption{Edge distance thresholds for datasets}
+            \label{tab:edge_thresholds}
+        \end{table}
+    \end{center}
+    
+    \subsubsection{Discussion}
+	The results show that too many markers in the image, or detecting also distant markers when already closer ones are detected, does not improve the estimation accuracy. What is more, as in the case of dataset 3RAND shown in Fig.X, the distant markers can even decrease the accuracy. Thus, redundant distant markers may be discarded to reduce the map size of the estimation problem and lower the computational demands.
+	
+	Answering the question of why the spikes in \autoref{fig:mean_error__per_threshold}, is not in the scope of this thesis and is subject to future research. However, we assume that one of the reasons why the estimates in lower visibility are less accurate than in higher visibility is that the distant markers bring false information into the estimation.
+	
+	For example, we assume that the peak in \textit{3RAND} at 3.6~m occurred as follows. While for higher thresholds there were more distant markers that contributed to the tracking well, at 3.6~m they are not detected anymore, but there are still distant markers that may bring false information due to their placement or the device movement, which harms the estimation. By lowering the threshold to 3.4~m, these tags are discarded, thus, not bringing false information into the estimation. 
+	
+	We also assume that this interference by distant markers is occurring periodically in the rest of the dataset 3RAND, as well as in 1CW. We suppose that it could be controlled by adjusting the EKF parameters PixelStd and MahalanobisTh. The pixel standard deviation parameter sets the impact of tag detection on the estimation; increasing it would cause fewer outliers, but for the price of lower accuracy. On the other hand, lowering the Mahalanobis threshold would result in more frequent outliers; thus, the tag poses would be more frequently reset, and the system would have a higher chance of recovery. 
+    
+    \subsection{Added noise}
+    \subsubsection{Discussion}
+    
 \section{Future work}
-        
+
+
+
 
 \chapter{Conclusion}
 This thesis analyzed the underwater challenges of AR systems that are based on hybrid pose tracking and use Kalman filters for sensor fusion. First, the most popular motion tracking techniques were covered, and the Kalman filtering technique was explained. Then a solution suitable for underwater AR that uses fiducial markers and inertial measurements fused by the extended Kalman filter was chosen. Since this thesis focuses on smartphones, but the adopted solution is built for robots and runs only offline on the computer, the measurements of the smartphone had to be converted into an appropriate input format.
