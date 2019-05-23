@@ -407,6 +407,10 @@ Calibration and bias free comparison is essential for our experiment. This secti
     Before recording the datasets, a new calibration was performed following the documentation\footnote{\url{https://v20.wiki.optitrack.com/index.php?title=Calibration}}, with exceptional results with the mean 3D error of 0.673 mm. In our experiments, the average error per marker was 0.1mm for the static marker, and 0.4mm for the moving smartphone.
 
     \subsection{Markers}
+    To find the pixel standard deviation of the marker detections in the conditions of our experiment, we built a static scene with the phone recording two markers at the distances of 1 m and 3 m for one minute. We calculated the average standard deviation of the detected corners, resulting in 0.40811 pixels for the marker at 1 m and 0.44091 pixels for the marker at 3 m. 
+    
+    The default PxStd parameter value for RCARS is 25 pixels. However, since we are recording in a higher resolution, we rather do not decrease this value and leave it on default.
+    
     \begin{itemize}
         \item apriltags
         \item in EKFsettings.info, number of dynamic tags is set to 30. I used 27 AprilTags downloaded from here: \url{https://robot2016.mit.edu/sites/default/files/documents/project_apriltag36h11.pdf}
@@ -525,7 +529,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     
     \begin{figure}
         \includegraphics[width=12cm]{img/thresholds.png}
-        \caption{Mean error per threshold plots for each dataset.}
+        \caption{TODO: Horizontally. Mean error per threshold plots for each dataset.}
         \label{fig:mean_error__per_threshold}
     \end{figure}
     
@@ -569,27 +573,46 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
 	We also assume that this interference by distant markers is occurring periodically in the rest of the dataset 3RAND, as well as in 1CW. We suppose that it could be controlled by adjusting the EKF parameters PixelStd and MahalanobisTh. The pixel standard deviation parameter sets the impact of tag detection on the estimation; increasing it would cause fewer outliers, but for the price of lower accuracy. On the other hand, lowering the Mahalanobis threshold would result in more frequent outliers; thus, the tag poses would be more frequently reset, and the system would have a higher chance of recovery. 
     
     \subsection{Added noise}
-    \subsubsection{Discussion}
+    We added zero-mean Gaussian noise to the tag corner detections with the standard deviations of 2, 5, 8, 10, 15, and 20 pixels, and respectively raised the \textttt{PxStd} parameter, representing the squared pixel standard deviation in the EKF estimation. Since the value of this parameter in full visibility is 25 pixels, after corrupting the detection results with the noise of standard deviation $\sigma$, the resulting value for the PxStd is $25 + \sigma^2$. \autoref{fig:noise} shows the output of this simulation in a mean error per noise standard deviation plot for every dataset.
+
+    \begin{figure}
+        \includegraphics[width=12cm]{img/noise.png}
+        \caption{TODO: Horizontal pltos. Errors per noise standard deviation}
+        \label{fig:noise}
+    \end{figure}
     
-\section{Future work}
-
-
-
-
+    The results are similar for the datasets \textit{2CCW} and \textit{3RAND}. By adding noise of even 2~pixels, the mean error per sample rises from 22~cm to 65~cm in \textit{2CCW}, and from 31~cm to 65~cm in \textit{3RAND}. After continually increasing the amount of noise, the mean errors in \textit{3RAND} stay on 65~cm +- 1~cm to up to 15~pixels, while the mean errors in \textit{2CCW} stay on 65~cm +- 5~cm up to 10~pixels, and at 15~pixels, the error rises to 80~cm per sample. However, with the noise standard deviation of 20~pixels, the mean error significantly decreases in both datasets.
+    
+    In contrast, the mean errors in \textit{1CW} rise and drop randomly, ranging from 13~cm at full visibility up to 109~cm at 8~pixels.
+    
+    \subsubsection{Discussion}
+    The datasets \textit{2CCW} and \textit{3RAND} confirm that by taking into account the pixel variance in the EKF estimation, the estimation accuracy is kept on the same level, or may even increase due to the large variance parameter. 
+ 
+    A subject of future work can be determining the PxStd value for the device, as we left it on the default 25~pixels, but it has a considerable influence on the estimation accuracy.
+    
+    
 \chapter{Conclusion}
-This thesis analyzed the underwater challenges of AR systems that are based on hybrid pose tracking and use Kalman filters for sensor fusion. First, the most popular motion tracking techniques were covered, and the Kalman filtering technique was explained. Then a solution suitable for underwater AR that uses fiducial markers and inertial measurements fused by the extended Kalman filter was chosen. Since this thesis focuses on smartphones, but the adopted solution is built for robots and runs only offline on the computer, the measurements of the smartphone had to be converted into an appropriate input format.
+In this thesis, we analyzed the underwater challenges of AR systems that are based on hybrid pose tracking and use Kalman filters for sensor fusion. We first chose a solution that meets our requirements, RCARS, and utilized it for the use with smartphone recordings. Using this system, we evaluated the effect of decreased visibility conditions simulated in a laboratory equipped with a motion capture system as ground truth.
 
-Further, experiments in a laboratory equipped with high-quality motion capture system were designed and performed. They aimed at simulating poor visibility conditions by (1) discarding markers according to their distance from the camera and by (2) corrupting the detected corners by adding artificial noise to simulate water turbidity.
+We simulated the underwater conditions by discarding markers according to their distance from the camera and by corrupting the detected corners by adding artificial noise to simulate water turbidity. 
 
-The results showed that a threshold distance for a good AR experience is around 2.3 meters. When the visibility is lower, the pose estimates start diverging quickly. However, it heavily depends on the marker placement density. In a dataset with the camera pointing rather straight than downwards, focusing on distant objects, the threshold was around 2.5 meters with the mean error per sample of 10 centimeters. On the other hand, in a dataset with the camera pointing more downwards, even 1.9 meters provided a satisfactory tracking accuracy with the mean error per sample of 20 centimeters. Another observation is that markers placed more than 4 meters away from the camera don't contribute a lot to the pose estimation and can be discarded to lower the filter state size and thus improve the estimation speed.
+The results on our datasets show that the pose estimation accuracy of the system in 2.2m visibility is on the same level as in 3, 4, or even 5m visibility. Thus, we conclude that the system does not need a high amount of markers to produce accurate pose estimates. Instead, the number of detected markers can be even decreased to reduce computational complexity and, thus, improve the estimation speed.
 
-Adding noise and, at the same time, raising the pixel standard deviation parameter of the EKF did not result in reducing the pose estimate accuracy significantly, which underwrites the robustness of the filtering system. 
+From our experiments, we learned that for EKF-based systems, proper configuration is critical for satisfactory pose estimation. The experiment of adding noise to the detection showed that when the correct pixel standard deviation parameter is provided, the system can produce precise pose estimates even in a very turbid environment. However, these parameters are device dependent; finding them is not trivial and requires some experience. 
 
-The primary takeaways from the experiments include that the accuracy of the results heavily depends on the camera intrinsic and extrinsic calibration. Enough time should be dedicated to finding out these parameters, otherwise, the results are going to be misleading. 
+\section{Future work}
+Since even a low number of markers is enough for quality estimates, future work will concentrate on analyzing datasets with sparsely placed markers. For this purpose, the RCARS visualization package is helpful, because it provides live pose estimation in a 3D workspace and an image preview that contains both the marker detections and the corresponding estimations. This tool can also be used for finding the appropriate EKF parameters for the device to minimize the bias caused by improper EKF configuration. 
 
-The tracking accuracy also depends on the camera movement, which should be slow, controlled, and with minimized shake and motion blur. Furthermore, the autofocus of the camera should be turned off to avoid "focus breathing."
+Furthermore, other devices can be used for testing, since the system is also affected by the field of view, the autofocusing system of the camera, and the camera and IMU synchronization.
+The intrinsic camera calibration depends on the field of view, which depends on the focusing distance. Thus, the calibration parameters can be obtained only for one focusing distance. However, when the camera's autofocus is enabled, the focusing distance changes throughout the dataset, causing the calibration parameters to be outdated. This problem can be tackled by saving the calibration parameters for various focusing distances and interchanging between them online during the detection.
+In the video recordings of our datasets, "focus breathing" of the autofocusing system occurred, which brings the tags temporarily out of focus, leading to detection loss. The “focus breathing” can be solved either by using a smartphone with a better autofocusing system or by disabling the autofocus and setting the focus to a proper distance. However, due to poor lighting conditions underwater, the cameras use large apertures leading to a shallower depth of field in the image, which increases the amount of blur in the background and the foreground; thus, possibly harming detection.
+ 
+Another possible source of bias in our experiment is the pose alignment between RCARS and the motion capture system. Thus, instead of using the absolute alignment into one coordinate frame, one could compare their relative measures, such as the angular velocity or the total distance covered.
+ 
+The future work will also concentrate on the development of markerless SLAM based solutions that detect natural features instead of markers. However, this may lead to higher computational demands on the mobile device in both the detection and the estimation. Moreover, simulating underwater conditions for such systems is a whole new challenge. 
 
-Future work will concentrate on developing a self-contained pose tracking system designed for smartphones, considering the low-cost sensors, low power consumption, and computational complexity constraints. In addition, the detector could search not only for fiducial markers but also for image features to achieve better precision and lower the field preparation requirements.
+\todo{Too informal? :)}
+
 
 
 \printbibliography[heading=bibintoc] %% Print the bibliography.
