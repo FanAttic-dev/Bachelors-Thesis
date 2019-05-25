@@ -56,7 +56,12 @@
 \usepackage{amsthm}
 \usepackage{amsfonts}
 \usepackage{url}      %% Hyperlinks
+
 \usepackage[textwidth=2.5cm]{todonotes}
+\setlength{\marginparwidth}{2.5cm}
+
+\usepackage{siunitx}
+
 \usepackage{markdown} %% Lightweight markup
 \usepackage{listings} %% Source code highlighting
 \lstset{
@@ -73,11 +78,12 @@
 \renewcommand{\sectionautorefname}{Section}
 \chapter*{Introduction}
     \addcontentsline{toc}{chapter}{Introduction}
+    \section{Introduction}
     The seabed is often called the biggest museum in the world. Thousands of shipwrecks, ancient flooded cities, and other structures form our underwater cultural heritage. Because many of these objects are deprived of their context when exhibited on land, some sites offer \textit{in situ} experience, where scuba divers have the chance to experience them in their original surroundings \cite{unesco}. 
 
     Immersive technologies are extensively used at such archaeological sites since they can present information connected to user's location, e.g., historical facts, visual navigation, or even provide an augmented reality view of the original state of the structure. A European Union project, named iMareCulture\footnote{https://imareculture.eu/}, is concerned about developing such applications. One branch of the project, which this thesis is a part of, aims at implementing virtual visits in augmented reality.
     
-    As defined in \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real-time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
+    As Aron et al. defined \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real-time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
     
     \begin{itemize}
       \item Vision-based methods provide high accuracy but slow update rates and require line-of-sight between the camera and the markers;
@@ -91,6 +97,16 @@
     The fourth chapter is about experiments. Firstly, it presents the technical equipment and testing conditions. Secondly, it shows the Kalman filter performance from more straightforward cases (only a single marker with accelerometer) to the complex ones, when all IMU sensors along with multiple markers are involved. Successively, motion tracking is used as ground-truth, and several non-linear variants, such as the Extended and Unscented Kalman filter, are built and compared to each other.
     
     In the last chapter, an upgraded working prototype of the AR application is tested in the Underwater Archaeological Park of Baia in Italy. The quality of the prototype is discussed, and gives suggestions for future development.
+
+\chapter{Abstract}
+\section{English}
+This thesis analyzes the effect of underwater conditions on a chosen pose estimation system that solves the task of determining the position and orientation of the device in its environment. Within the project iMareCulture, it contributes to the application of augmented reality in underwater museums.
+
+First, a marker-based visual-inertial robotic pose tracking system that uses the extended Kalman filter (EKF) is utilized for the use with smartphone recordings. Second, the underwater environment is simulated in post-processing of the marker detection results by (1) discarding the detected markers according to their distance to simulate poor visibility, and (2) by corrupting the detected tag corners by artificial noise to simulate water turbidity. The simulations take place in a laboratory equipped with an external motion capture system as ground truth for evaluating the accuracy of the pose estimated by the utilized system.
+
+The results show that the tracking accuracy does not significantly change with a decreasing number of detected markers. Thus, the markers can be placed more sparsely in the environment, or the system can discard redundant markers to reduce the computational cost. Furthermore, provided correct EKF settings, the system produces accurate pose estimates even with a high amount of noise corruption, simulating a very turbid environment.
+
+\section{Slovak}
 
 \chapter{Background}
     \begin{figure}
@@ -108,92 +124,180 @@
     This thesis is a part of augmented reality research for this project. Figure \ref{fig:baia2} shows an example of AR usage, where the scuba diver is holding a tablet housed in a waterproof case, and observing an original reconstruction of Villa a Protiro in the Archaeological Underwater Park of Baia, Italy.
 
 \chapter{Pose estimation for Augmented Reality}
-    As Azuma defined in 1997, AR systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly with the real world. Besides aligning real and virtual objects with each other, these systems have to be interactive and in real time \cite{97azuma}. In contrast with VR, where the user is immersed in a virtual environment, AR allows interaction with virtual objects in a seamless way.
+As Azuma defined in 1997, AR systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly with the real world. Besides aligning real and virtual objects with each other, these systems have to be interactive and in real time \cite{97azuma}. In contrast with VR, where the user is immersed in a virtual environment, AR allows interaction with virtual objects in a seamless way.
 
-    The main AR research topics are Tracking Techniques, Interaction Techniques, Calibration and Registration, AR Applications, and Display Techniques \cite{17ISMAR}. Tracking is the most popular and fundamental one to deliver a coherent AR system. Its goal is to estimate the pose of the camera, i.e., the position and orientation relative to a reference frame. Despite the enormous progress in this field in the last ten years, it is still challenging to achieve low latency tracking with high precision, accuracy, jitter, and lag in a mobile device. If we compare AR and VR again, but now in terms of tracking requirements, AR is more demanding because errors in registration are easier to detect by the user \cite{93Azuma}.
-    
-    The tracking problem gets even more complex in underwater environments, where the system has to be waterproof, has to withstand the high pressure of diving depth, cannot rely on GPS, and the captured images suffer from turbidity effects caused by the medium.
-    
-    Furthermore, the amount and cost of sensors packed in smartphones are much more limited than in specialized devices used in for example robotics \cite{vi-sensor}. As a consequence, the measurements are noisier and biased. Tracking techniques tackle these problems by integrating several sensors with complementary characteristics into a sensor fusion filter. This chapter provides an overview of the pose estimation techniques and their utilization under water.
+The main AR research topics are Tracking Techniques, Interaction Techniques, Calibration and Registration, AR Applications, and Display Techniques \cite{17ISMAR}. The most popular amongst them are the tracking techniques, since good pose tracking is vital to deliver a seamless AR experience.
 
-    \section{Tracking techniques}
-        \subsection{Visual tracking}
-            Vision-based techniques use computer vision methods to calculate the camera pose relative to real-world objects \cite{99SoYou,02Pinz}. They provide high accuracy over a large workspace, low jitter, and no drift. The frames are grabbed at rates of 30-60Hz. The general drawbacks include that they require line-of-sight between the camera and the detected target, and that motion blur in the image during drastic motions leads to temporary loss of real-time tracking abilities. The targets of the detector are either markers (marker-based tracking) or distinctive features in the image (markerless tracking). 
+The tracking techniques are concerned with determining the pose of the camera, i.e., its position and orientation relative to a reference frame. Despite the enormous progress in this field in the last ten years, it is still challenging to achieve low latency tracking with high precision, accuracy, jitter, and lag in a mobile device. If we compare AR and VR again, but now in terms of tracking requirements, AR pose tracking is more demanding, since errors in registration are easier to detect by the user \cite{93Azuma}.
+
+The tracking problem gets even more complex in underwater environments, where the system has to be waterproof, has to withstand the high pressure of diving depth, cannot rely on GPS, and the captured images suffer from turbidity effects caused by the medium.
+
+Furthermore, the amount and cost of sensors packed in smartphones are much more limited than in specialized devices used in, for example, robotics \cite{vi-sensor}. As a consequence, the measurements are noisier and biased. Tracking techniques tackle these problems by integrating several sensors with complementary characteristics into a sensor fusion filter.
+
+This chapter gives an overview of the popular pose estimation techniques and their utilization in the sea.
+
+    \section{Visual tracking}
+    Vision-based techniques use computer vision methods to calculate the camera pose relative to real-world objects \cite{99SoYou,02Pinz}. 
     
-            Marker-based tracking methods simplify the problem of detecting 3D objects by detecting only 2D artificial markers that are easy to recognize \cite{19Cejka}. The most dominant technique in marker-based tracking is detecting square markers. They are easy and fast to detect and contain enough information to compute their relative pose to the camera. Examples of some software libraries are ARToolKit \cite{ARToolKit}, ARTag \cite{ARTag}, ARUco \cite{ARUco}, AprilTag \cite{AprilTag}. Besides square markers, other types of markers are also used in AR. For example circular or elliptic markers \cite{CircularMarker, EllipticMarker}. The elliptic shape of their contours provides more information about the position than in the case of square markers. Thus, they can be detected even when they are partially occluded. This is, however, paid by higher processing time. Other types of markers are described in \cite{OtherMarker1, OtherMarker2, OtherMarker3, OtherMarker4, OtherMarker5}.
-            
-            Instead of detecting artificial markers, markerless tracking methods detect the distinctive features in the image like edges, corners, or textures. The detection algorithms consist of two parts: detection of these features and computation of a descriptor for each feature that can match the features between frames \cite{19Cejka}. The speed and accuracy depend on the complexity of the scene. While simple targets like blobs or corners can be easily identified, cluttered scenes with many objects which are moving independently are extremely difficult to handle \cite{02Pinz}. This method is also not suitable for textureless environments. Examples of algorithms for natural feature detection used in augmented reality are SIFT \cite{SIFT}, SURF detector \cite{SURF}, and FAST \cite{FAST}. Markerless tracking is further used in simultaneous localization and mapping (SLAM) solutions described later in this chapter.
+    They provide high accuracy over a large workspace, as well as low jitter and no drift. The frames are grabbed at rates of 30--60~Hz. 
+    
+    The general drawbacks include that they require line-of-sight between the camera and the detected target, and that motion blur in the image during drastic motions leads to temporary loss of real-time tracking abilities.  
+
+        \subsection{Camera calibration}
+        \todo[inline]{... When the image is rectified, the it can be used for marker detection. The targets of the detector are either markers (marker-based tracking) or distinctive features in the image (marker-less tracking). }
         
-            \begin{figure}
-                \includegraphics[width=10cm]{example-image}
-                \caption{Different types of markers}
-                \label{fig:Markers}
-            \end{figure}
-            
-            Under-water localization from vision is still an open problem, and the state-of-the-art algorithms in visual odometry or SLAM do not give satisfying results \cite{17Weidner}. Most of the difficulties arise due to visual degradations caused by the medium. First, the strong light absorption shortens the visual perception to a few meters and makes the presence of an artificial lighting system mandatory when operating in deep waters. Second, the propagation of light is scattered by floating particles, causing turbidity effects on the captured images. Finally, the artificial light attracts the animals, and they tend to get in the field of view of the camera, which leads to occlusions in the images.
-    
-        \subsection{Inertial tracking}
-            Most smartphones have an Inertial Measurement Unit (IMU) for monitoring the body's movement or orientation in three-dimensional space with respect to the Earth coordinate system. The IMU consists of a triple axis accelerometer and a triple axis gyroscope, see Figure \ref{fig:AndroidIMU}. The accelerometer senses the acceleration of the sensor along of each input axis, while the gyroscope measures the angular velocity around each input axis. Together, they form a 6 DoF (Degrees of Freedom) tracking system, i.e., tracking movement in 3 axes plus rotation in 3 axes (pitch, roll, yaw). Sometimes a third set of sensors, magnetometers, is added for heading reference (yaw axis), measuring the Earth's magnetic field. However, they are easily distorted by any nearby metallic substance that disturbs the magnetic field \cite{08ISMAR}. Thus, they are not further used in this thesis.
-            
-            \begin{figure}
-                \includegraphics[width=6cm]{img/AndroidIMU.png}
-                \caption{Coordinate system (relative to a device) that's used by the Android Sensor API.\protect\footnotemark}
-                \label{fig:AndroidIMU}
-            \end{figure}
-            \footnotetext{\url{https://developer.android.com/guide/topics/sensors}}
-            
-            \subsubsection{MEMS}
-            As opposed to the traditional mechanical IMUs, the IMUs in smartphones are based on MEMS (Microelectromechanical systems) technology. On the one hand, this makes them lightweight, compact, power-efficient, and less expensive, thus well suited for mobile computing. On the other hand, due to imperfections of the manufacturing and physical characteristics of the sensors, real IMU measurements are usually affected by random noise and systematic errors, such as bias, inaccurate scale factors, axis misalignments, and g-sensitivity \cite{19Xiao, 94Titteron, 03Nassar}. These errors may significantly influence the performance of visual-inertial methods.
-            
-            The following example illustrates these errors on the accelerometer: The accelerometer measures proper accelerations that are accelerations relative to a free fall. For example, if the device is laying flat on the table, the accelerometer should measure an acceleration of $1g \approx 9.81 m/s^2$ away from the center of the Earth. In contrast, when the device is in free fall, it should measure zero. However, as shown in Figure \ref{fig:imu_errors}, due to the bias of $-0.06 m/s^2$ and random noise of $0.02 m/s^2$, the measured acceleration is $9.77 m/s^2$.
-
-            \begin{figure}
-                \includegraphics[width=10cm]{img/IMU_errors.png}
-                \caption{The bias (the offset of the sensor measurement from the physical input), noise (or gain is the random noise that affects the sensor measurements), and the scale factor (the relation between input and output) \cite{novatel}.}
-                \label{fig:imu_errors}
-            \end{figure}
-            
-            Thus, the sensor measurements are modeled as follows:
-            \begin{align} 
-                a_m &= (a - g) + b_a + n_a \\
-                w_m &= w + b_\omega + n_\omega
-            \end{align}
-            where $a_m$ and $w_m$ are the raw measurements of accelerometer and gyroscope, respectively, $a$ and $w$ are linear acceleration and angular velocity of the body frame. $g$ is the gravity vector, $b_a$ and $b_\omega$ are the accelerometer and gyroscope biases respectively, $n_a$ and $n_\omega$ are the measurement noises. In this thesis, $n_a$ and $n_\omega$ are assumed to be Gaussian white noise, $n_a \sim \mathcal{N}(0,\sigma^2_a), n_\omega \sim \mathcal{N}(0,\sigma^2_\omega)$. For other IMU measurement models involving scale factors, axis misalignment, g-sensitivity, etc., please refer to \cite{16Rehder}. Calibration techniques are used to obtain the value of the bias.
-            
-            \subsubsection{IMU Calibration}
-            To identify the value of bias and other intrinsic parameters of sensors for compensating the measurement errors, we use IMU calibration \cite{19Xiao}. Calibration is done by comparing the raw measurements to some known reference values and minimizing the differences between them. The reference calibration values can be estimated offline or online. 
-
-            Offline calibration is relevant in the case of high-performance sensors which are manufactured precisely or factory calibrated carefully, and each sensor is sold with its own calibration parameters stored into the firmware \cite{14Tedaldi}. However, in consumer electronics, low-cost IMUs are used. The traditional high precision calibration methods require special external equipment such as motion tracking system \cite{04Kim}, which is often time-consuming and more expensive than the IMU itself. Moreover, the intrinsic calibration parameters may vary with mechanical shocks, temperature, and other factors. Treating these parameters as a constant would lead to performance degradation of the inertial tracking system \cite{19Xiao}. For an example of offline accelerometer calibration, please refer to \cite{98Lotters}.
-            
-            In contrast, online calibration is repeating the calibration process periodically. It is performed real time and without any external equipment. For example, Xiao et al. \cite{19Xiao} used this method to concurrently perform 3D pose estimation and online IMU calibration based on optimization methods in unknown environments without any external equipment. This thesis also utilizes the online calibration method.
-            
-            \subsubsection{Other IMU drawbacks}
-            Besides bias and gain, another issue arises when using IMUs for navigation is the drift, an ever-increasing difference between where the system thinks it is located and the actual location. The drift occurs due to integrations with respect to time, where even small errors in measurements accumulate over time. In the case of position, the first integration of acceleration returns velocity and the second returns position. A constant error in acceleration results in a linear error in velocity and a quadratic error growth in the position \cite{08Springer}.
-
-            If the angular velocity measurements from the gyroscope are integrated to obtain the orientation, the errors accumulate over time similarly to the accelerometer. Thus, in many attitude estimation solutions, the two sensors are fused because of their complementary characteristics: the gyroscope is accurate for quick movement in short periods of time, and the accelerometer determining the gravitation vector in longer periods of time \cite{99Luinge}. Fusing gyroscopes and accelerometers allows determining pitch and roll axes.
-            
-        \subsection{Hybrid tracking}
-        Hybrid tracking is a promising alternative to tracking techniques. It combines multiple sensors to build more robust and accurate tracking systems. This sensor fusion exhibits the virtues of both technologies and compensates for their respective drawbacks \cite{99SoYou}.
-
-        Visual-inertial tracking takes advantage of the complementary properties of visual and inertial sensors \cite{16Palonen}. On the one hand, the drawbacks of vision tracking, i.e., low-frequency, line-of-sight requirement, and slow motions due to motion blur, are compensated by the advantages of the IMU, i.e., high-frequency measurements from the IMU, occlusion immunity, and high accuracy in cases of rapid directional changes or high rotational speed. On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
+        \begin{figure}
+        \begin{center}
+            \begin{minipage}{.29\textwidth}
+                \begin{center}
+                    \includegraphics[width=.6\textwidth]{img/Markers/AprilTag.png} \\
+                    \footnotesize(a) AprilTag \cite{AprilTag} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/Elipses.png} \\
+                    \footnotesize(d) Ellipse \cite{Ellipse} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/reacTIV.png} \\
+                    \footnotesize(d) reacTIVision \cite{reacTIVision} \\
+                \end{center}
+            \end{minipage}
+            \begin{minipage}{.29\textwidth}
+                \begin{center}
+                    \includegraphics[width=.6\textwidth]{img/Markers/ARTag.jpg} \\
+                    \footnotesize(b) ARTag \cite{ARTag} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/CCTag.png} \\
+                    \footnotesize(e) CCTag \cite{CCTag} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/RUNE.png} \\
+                    \footnotesize(e) RUNE-Tag \cite{RUNETag} \\
+                \end{center}
+            \end{minipage}
+            \begin{minipage}{.29\textwidth}
+                \begin{center}
+                    \includegraphics[width=.6\textwidth]{img/Markers/ARToolKit.pdf} \\
+                    \footnotesize(c) ARToolKit \cite{ARToolKit} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/Intersense.png} \\
+                    \footnotesize(e) Intersence \cite{Intersence} \\
+                    \vspace{0.6cm}
+                    \includegraphics[width=.6\textwidth]{img/Markers/FourierTag.png} \\
+                    \footnotesize(e) Fourier Tag \cite{FourierTag} \\
+                \end{center}
+            \end{minipage}
+        \end{center}
+            \caption{Existing fiducial marker designs}
+            \label{fig:Markers}
+        \end{figure}
         
-        Several approaches are tackling the visual-inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
+        \subsection{Marker-based tracking}
+        Marker-based tracking methods simplify the problem of detecting 3D objects by detecting only 2D artificial markers that are easy to recognize \cite{19Cejka}. \autoref{fig:Markers} shows several examples of marker types. 
+        
+        \todo[inline]{Figure above or below.}
+        
+        The most dominant technique in marker-based tracking is detecting square markers. They are easy and fast to detect and contain enough information to compute their relative pose to the camera. Examples of some software libraries are ARToolKit \cite{ARToolKit}, ARTag \cite{ARTag}, ARUco \cite{ARUco}, AprilTag \cite{AprilTag}. 
+        
+        Besides square markers, other types of markers are also used in AR \cite{RUNETag, Intersence, reacTIVision, CCTag, FourierTag}. For example circular or elliptic markers \cite{Intersence, Ellipse}. The elliptic shape of their contours provides more information about the position than in the case of square markers. Thus, they can be detected even when they are partially occluded. This is, however, paid by higher processing time.
+        
+        \subsection{Marker-less tracking}
+        Instead of detecting artificial markers, marker-less tracking methods detect the distinctive features in the image, such as edges, corners, or textures. The detection algorithms consist of two parts: detection of these features and computation of a descriptor for each feature that can match the features between the frames \cite{19Cejka}. 
+        
+        The speed and accuracy depend on the complexity of the scene. While simple targets like blobs or corners can be easily identified, cluttered scenes with many objects moving independently are extremely difficult to handle \cite{02Pinz}. This method is also not suitable for texture-less environments. 
+        
+        Examples of algorithms for natural features detection used in augmented reality are: SIFT \cite{SIFT}, SURF detector \cite{SURF}, and FAST \cite{FAST}. Marker-less tracking is further used in simultaneous localization and mapping (SLAM) solutions described in \autoref{subsec:SLAM} on page~\pageref{subsec:SLAM}.
+        
+        \subsection{Underwater visual tracking} \label{subsec:underwater_visual}
+        Underwater localization from vision is still an open problem, and the state-of-the-art algorithms in visual odometry or SLAM do not give satisfactory results \cite{17Weidner}. 
+        Most of the difficulties arise due to visual degradations caused by the medium:
+        
         \begin{itemize}
-            \item loosely coupled systems - they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
-            \item tightly coupled approaches - they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
+            \item The strong light absorption shortens the visual perception to a few meters and makes the presence of an artificial lighting system mandatory when operating in deep waters.
+            \item The propagation of light is scattered by floating particles, causing turbidity effects on the captured images.
+            \item The artificial light attracts the animals, and they tend to get in the field of view of the camera, which leads to occlusions in the images.
         \end{itemize}
-        This thesis uses recursive filtering by utilizing the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high-precision visual-inertial navigation system and is implemented in most high-accuracy visual-inertial systems estimators \cite{13Leutenegger}.
-        
-        \subsection{SLAM}
-        Hybrid tracking approaches are often combined with simultaneous localization and mapping (SLAM). SLAM is the computational problem of building a map of an unknown environment and, at the same time, using this map to compute the pose of the tracking device \cite{SLAMII}. It is a markerless technology, i.e., no markers or image targets are necessary to place in the environment. The map is created by obtaining spatial data of the environment, for example, 3D point clouds. Mapping and tracking simultaneously have high computational demands on the device, which is also a reason why SLAM solutions were initially employed in systems with specialized equipment, for example in robotics, self-driving cars, or unmanned aerial vehicles. However, thanks to advances in computer vision, performance, and sensory navigation of mobile devices in the past decade, smartphones are powerful enough to run AR applications that use SLAM. For general concepts of existing mobile SLAM techniques, please refer to \cite{17Taketomi} and for a survey of 23 chosen methods to \cite{16Younes}.
+    
+    \section{Inertial tracking}
+    Most smartphones contain an Inertial Measurement Unit (IMU) for monitoring the body's movement or orientation in 3D space with respect to the Earth coordinate system. The IMU consists of a triple axis accelerometer and a triple axis gyroscope, as depicted in \autoref{fig:AndroidIMU}. 
+    The accelerometer senses the acceleration of the sensor along of each input axis, while the gyroscope measures the angular velocity around each input axis. Together, they form a 6 DoF (Degrees of Freedom) tracking system, providing movement tracking in 3 axes plus rotation in 3 axes (pitch, roll, yaw). Sometimes a third set of sensors, magnetometers, is added for heading reference (the yaw axis), measuring the Earth's magnetic field. However, since they are easily disturbed by any nearby metallic substance, they are often neglected in pose estimation systems \cite{08ISMAR}.
+    
+    \begin{figure}
+        \includegraphics[width=6cm]{img/AndroidIMU.png}
+        \caption{Coordinate system (relative to a device) that's used by the Android Sensor API.\protect\footnotemark}
+        \label{fig:AndroidIMU}
+        \todo[inline]{My picture or image taken from}
+    \end{figure}
+    \footnotetext{\url{https://developer.android.com/guide/topics/sensors}}
+    
+    \subsection{MEMS}
+    As opposed to the traditional mechanical IMUs, the IMUs in smartphones are based on MEMS (Microelectromechanical systems) technology. On the one hand, this makes them lightweight, compact, power-efficient, and less expensive, thus well suited for mobile computing. On the other hand, due to imperfections of the manufacturing and physical characteristics of the sensors, real IMU measurements are usually affected by random noise and systematic errors, such as bias, inaccurate scale factors, axis misalignments, and g-sensitivity \cite{19Xiao, 94Titteron, 03Nassar}. These errors may significantly influence the performance of visual-inertial methods.
+    
+    The following example illustrates these errors on the accelerometer: The accelerometer measures proper accelerations that are accelerations relative to free fall. For example, if the device is laying flat on the table, the accelerometer should measure an acceleration of $1g \approx \SI{9.81}{\metre\per\square\second}$ away from the center of the Earth. In contrast, when the device is in free fall, it should measure zero. However, as shown in Figure \ref{fig:imu_errors}, due to the bias of \SI{-0.06}{\metre\per\square\second} and random noise of \SI{0.02}{\metre\per\square\second}, the measured acceleration is \SI{9.77}{\metre\per\square\second}.
 
-        Since there is no need for adding other elements in the environment and today's smartphones have enough computing power, many commercial AR software development kits (SDK) are based on SLAM. The most powerful and popular SDK's are ARCore (Google) \cite{ARcore}, ARKit (Apple) \cite{ARkit}, and Vuforia (PTC) \cite{Vuforia}. They offer native application programming interfaces (API's) for motion tracking, environmental understanding, and light estimation to simplify the task of building an AR experience. The developer can make use of the detection of horizontal surfaces, point cloud anchors, and virtual objects lighting that matches the surroundings to make their appearance more realistic. Amin and Govilkar give a comparative study of AR SDK's in \cite{Comparative}.
-        
-    \section{Underwater pose estimation}
+    \begin{figure}
+        \includegraphics[width=10cm]{img/IMU_errors.png}
+        \caption{The bias (the offset of the sensor measurement from the physical input), noise (or gain is the random noise that affects the sensor measurements), and the scale factor (the relation between input and output) \cite{novatel}.}
+        \label{fig:imu_errors}
+    \end{figure}
+    
+    Thus, the sensor measurements are modeled as follows:
+    \begin{align} 
+        a_m &= (a - g) + b_a + n_a \\
+        w_m &= w + b_\omega + n_\omega
+    \end{align}
+    where $a_m$ and $w_m$ are the raw measurements of accelerometer and gyroscope, respectively; $a$ and $w$ are linear acceleration and angular velocity of the body frame, $g$ is the gravity vector, $b_a$ and $b_\omega$ are the accelerometer and gyroscope biases, and $n_a$ and $n_\omega$ are the measurement noises.
+    
+    For other IMU measurement models involving scale factors, axis misalignment, g-sensitivity, etc., please refer to \cite{16Rehder}.
+    
+    \subsection{IMU Calibration}
+    IMU calibration is used to identify the value of bias and other intrinsic parameters of sensors for compensating the measurement errors \cite{19Xiao}. It is performed by comparing the raw measurements to some known reference values and minimizing the differences between them. 
+    
+    The reference calibration values can be estimated offline or online.
+    
+    Offline calibration is relevant in the case of high-performance sensors manufactured precisely or factory calibrated carefully. Such sensors are sold with their own calibration parameters stored into the firmware \cite{14Tedaldi}. 
+    However, in consumer electronics, low-cost IMUs are used. The traditional high-precision calibration methods require special external equipment, such as a motion tracking system \cite{04Kim}, which is often time-consuming and more expensive than the IMU itself. Moreover, the intrinsic calibration parameters may vary with mechanical shocks, temperature, and other factors. Treating these parameters as a constant would lead to performance degradation of the inertial tracking system \cite{19Xiao}. For an example of offline accelerometer calibration, please refer to \cite{98Lotters}.
+    
+    In contrast, online calibration is repeating the calibration process periodically. It is performed real-time and without any external equipment. For example, Xiao et al. \cite{19Xiao} used this method to concurrently perform 3D pose estimation and online IMU calibration based on optimization methods in unknown environments without any external equipment. The pose tracking system used in this thesis also utilizes the online calibration method.
+    
+    \subsection{Other IMU drawbacks} \label{subsec:IMU_drawbacks}
+    Besides bias and gain, another issue, which arises when using IMUs for navigation, is the drift: an ever-increasing difference between where the system thinks it is located and its actual location. Even small errors in measurements lead to large drifts due to the integrating them with respect to time. 
+    
+    Integrating the acceleration once returns velocity, and integrating the acceleration twice returns position. However, the small errors in the accelerometer measurements grow linearly in velocity and quadratically in position, accumulating the error over time and causing the drift \cite{08Springer}. If the angular velocity measurements from the gyroscope are integrated to obtain the orientation, the errors accumulate similarly. 
+    
+    Thus, in many attitude estimation solutions, the accelerometer and the gyroscope are fused together to take advantage of their complementary characteristics: the gyroscope is accurate for quick movements in short periods of time, and the accelerometer can determine the gravitation vector in longer periods of time \cite{99Luinge}. The sensor fusion allows determining the pitch and roll axes, as well as achieving better results than using any of the sensors separately.
+
+    \section{Hybrid tracking}
+    As seen in the previous section, the sensor fusion compensates for the respective drawbacks of the accelerometers and the gyroscopes, exhibiting the virtues of both technologies. Hybrid tracking may combine not only the inertial, but many other types of sensors \cite{99SoYou}.
+    
+    Visual-inertial tracking takes advantage of the complementary properties of visual and inertial sensors \cite{16Palonen}. 
+    
+    On the one hand, the drawbacks of vision tracking, i.e., the low-frequency, line-of-sight requirement, or motion blur, are compensated by the advantages of the IMU, i.e., the high-frequency measurements from the IMU, occlusion immunity, and high accuracy in cases of rapid directional changes or high rotational speed.
+    
+    On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
+    
+    Several approaches are addressing the visual-inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
+    \begin{itemize}
+        \item loosely coupled systems - they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
+        \item tightly coupled approaches - they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
+    \end{itemize}
+    In this thesis, the tracking system is based on the recursive filtering of the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high-precision visual-inertial navigation system, and is implemented in most high-accuracy visual-inertial systems estimators \cite{13Leutenegger}.
+    
+    \subsection{SLAM} \label{subsec:SLAM}
+    Hybrid tracking approaches are often combined with simultaneous localization and mapping (SLAM). SLAM is the computational problem of building a map of an unknown environment and, at the same time, using this map to compute the pose of the tracking device \cite{SLAMII}. It is a marker-less technology, i.e., no markers or image targets are necessary to place in the environment. The map is created by obtaining spatial data of the environment, such as 3D point clouds. 
+    
+    Mapping and tracking simultaneously have high computational demands on the device, which is also a reason why SLAM solutions were initially employed in systems with specialized equipment, for example, in robotics, self-driving cars, or unmanned aerial vehicles. However, thanks to the advances in computer vision, performance, and sensory navigation of mobile devices in the past decade, smartphones are powerful enough to run AR applications that use SLAM. For general concepts of existing mobile SLAM techniques, please refer to \cite{17Taketomi} and for a survey of 23 chosen methods to \cite{16Younes}.
+
+    Many commercial AR software development kits (SDKs) are based on SLAM due to no need for placing tracking elements in the environment, and the high computing power of today's smartphones. The most powerful and popular SDKs are ARCore (Google) \cite{ARcore}, ARKit (Apple) \cite{ARkit}, and Vuforia (PTC) \cite{Vuforia}. They offer native application programming interfaces (API) for motion tracking, environmental understanding, and light estimation to simplify the task of building an AR application. The developer can make use of the detection of horizontal surfaces, as well as point cloud anchors or lighting of virtual objects matches the surroundings to make their appearance more realistic. Amin and Govilkar \cite{Comparative} give a comparative study of AR SDKs.
+
+    \section{Underwater tracking}
     \label{sec:underwater_pose_estimation}
-    Under the water, the number of requirements for an AR system is higher than on land. The system has to be waterproof, has to withstand the high pressure of diving depth and cannot rely on GPS \cite{18Ferrera}. This leads to the use of expensive, robust systems (e.g., remotely operated vehicles (ROVs) or autonomous underwater vehicles (AUVs)) that have to be equipped with advanced sensors (e.g., sonars, acoustic positioning systems, or Doppler velocity loggers (DVLs)), which are not suitable for mobile AR.
-
-    Some solutions found in the literature rely on IMUs, pressure sensors and DVLs \cite{14Paull}, which, as discussed in this chapter, leads to unavoidable drift over time due to measurement noise. The drift is constrained using complementary sensors such as cameras or acoustic positioning systems. However, at close-range, acoustic systems do not provide accurate enough localization information whereas visual sensing can be highly effective \cite{18Palomeras}. Nevertheless, as discussed in the introduction of this chapter, the captured images are degraded by turbidity. Furthermore, the information delivered by sonar is not as rich as optical images \cite{15BoninFont} and remain very challenging to analyze.
+    In the sea, the number of requirements for an AR system is higher than on land. 
+    
+    For example, GPS cannot be used for localization \cite{18Ferrera}, which leads to the use of advanced sensors, such as sonars, acoustic positioning systems, or Doppler velocity loggers (DVLs); however, these sensors are not suitable for mobile AR.
+    
+    Furthermore, the system has to be waterproof and has to withstand the high pressure of diving depth \cite{18Ferrera}. Thus, the solutions use expensive, robust systems, such as remotely operated vehicles (ROVs) and autonomous underwater vehicles (AUVs).
+    
+    Some solutions found in the literature rely on IMUs, pressure sensors, and DVLs \cite{14Paull}, which, as discussed in \autoref{subsec:IMU_drawbacks}, leads to unavoidable drift over time due to measurement noise. The drift is constrained using complementary sensors such as cameras or acoustic positioning systems. 
+    
+    However, at close-range, acoustic systems do not provide accurate enough localization information, whereas visual sensing can be highly effective \cite{18Palomeras}. Nevertheless, as discussed in \autoref{subsec:underwater_visual}, the captured images are degraded by turbidity. Furthermore, the information delivered by sonar is not as rich as optical images \cite{15BoninFont}, and remains very challenging to analyze.
     
 \chapter{Kalman filtering}
 
@@ -297,7 +401,7 @@ However, these conditions are difficult to imitate in the laboratory. Thus, we r
     Second, the Python script \textttt{threshold.py} takes this bag file and discards the markers further away from the camera than a given threshold. This is achieved by comparing the threshold to the z-coordinate of the marker pose relative to the camera. We also consider a linear falloff distance of one meter for discarding the markers. FigX shows an example with a threshold of 3 meters, where tags closer to the camera than 2 meters remain in the bag, tags at 2.5 meters have a 50 \% chance of being discarded, and all tags 3 or more meters far are discarded.
     
     \begin{figure}
-        \includegraphics[width=12cm]{img/falloff.eps}
+        \includegraphics[width=\textwidth]{img/falloff.eps}
         \caption{Falloff}
         \label{fig:falloff}
     \end{figure}
@@ -308,7 +412,7 @@ However, these conditions are difficult to imitate in the laboratory. Thus, we r
     \label{sec:noise}
     The second simulation assumes that there are floating particles in the water that bring noise into tag corner detection. We simulate this by corrupting the tag corner detections by random noise of a given variance. We are using the fact that the EKF in RCARS uses the tag corner detections as observations rather than the tag pose obtained by OpenCV. As a result of this holistic approach, we can improve the tracking by changing the PixelStd parameter in the EKFSettings.info file. The PixelStd parameter represents the pixel variance (the squared pixel standard deviation) of the tag corner detections.
     
-    In full visibility, we use a pixel variance of 25 pixels. After adding noise to the corners, we raise this variance accordingly. For example, for noise with variance of 100 pixels, we set the "PixelStd" parameter to 125.
+    In full visibility, we use a pixel variance of 25 pixels. After adding noise to the corners, we raise this variance accordingly. For example, for noise with variance of 100 pixels, we set the \textit{PixelStd} parameter to 125.
     
     The workflow is similar to the thresholding. First, we obtain the \textttt{<dataset>\_tags.bag} file with full visibility from the detector. Second, the \textttt{add\_noise.py} script adds random noise with Gaussian distribution with zero mean and a given standard deviation. It uses the pseudo-random number generators Python module random\footnote{\url{https://docs.python.org/2/library/random.html}} with a seed 250. Finally, a file named \\ \textttt{<dataset>\_<standard\_deviation>px\_<PixelStd\_parameter\_value>\_tags.bag} is output, which is then processed by the estimator to obtain the pose estimates in the file \\
     \textttt{<dataset>\_<standard\_deviation>px\_<PixelStd\_parameter\_value>\_est.bag}.
@@ -329,7 +433,7 @@ The filter and the mocap are two independent systems that do not communicate wit
     \label{sec:coords}
     For alignment, the goal is to find a common coordinate frame for RCARS and the mocap. There are several coordinate frames used in these systems:
     
-    \todo[inline]{Coordinate frame pictures}
+    \missingfigure[figwidth=\textwidth]{Coordinate frames}
     \begin{itemize}
         \item Mocap
         \begin{itemize}
@@ -367,7 +471,7 @@ The filter and the mocap are two independent systems that do not communicate wit
  
     It is assumed that the mocap dataset is always longer than the phone recording because, in our experiments, the recording on the mocap controller computer is started by the same person as the smartphone recording. Therefore, there is always a few second delay while the person moves to the initial position and starts recording on the smartphone. This is shown in Fig.X, where the recording on the smartphone was started 11 seconds after the mocap.
     
-    \missingfigure[figwidth=10cm]{Delayed position}
+    \missingfigure[figwidth=\textwidth]{Delayed position}
     
     Since there is no grouping element in the CSV files of mocap and RCARS, we compute the cross-correlation between the positions in a given axis to find the count of samples that the mocap is ahead of RCARS. The choice of the axis depends on the range of motion in the dataset. From our tests, we prefer to use the x- or y-axis, since they are usually better estimated than the z-axis representing the height.
 
@@ -492,19 +596,19 @@ Dataset \textit{3RAND} contains random trajectory movement with several fast mot
 The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and for \textit{3RAND} is 32~cm. The way the error occurs in the datasets differs; for example, while the error in \textit{2CCW} accumulates throughout the whole dataset, the error in \textit{3RAND} jumps at a certain point due to a fast movement, but then starts converging to its true position, which is again disrupted by the subsequent outliers.
 
 \begin{figure}
-    \includegraphics[width=12cm]{img/Dataset06.png}
-    \caption{Dataset \textit{1CW}}
+    \includegraphics[width=\textwidth]{img/Dataset06.png}
+    \caption{Dataset \textit{1CW}. Top-left: 3D visualization of the trajectory. Top-right: Difference between estimated and ground truth position per frame. Bottom: Estimated and ground truth position per axis.}
     \label{fig:dataset06}
 \end{figure}
 
 \begin{figure}
-    \includegraphics[width=12cm]{img/Dataset07.png}
+    \includegraphics[width=\textwidth]{img/Dataset07.png}
     \caption{Dataset \textit{2CCW}}
     \label{fig:dataset07}
 \end{figure}
 
 \begin{figure}
-    \includegraphics[width=12cm]{img/Dataset08.png}
+    \includegraphics[width=\textwidth]{img/Dataset08.png}
     \caption{Dataset \textit{3RAND}}
     \label{fig:dataset08}
 \end{figure}
@@ -519,8 +623,8 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     By decreasing the distance threshold, the count of detected images also decreases. When there is no image detected, the estimations are based only on the inertial measurements, and therefore the filter starts drifting away. This is shown in \autoref{fig:07_drift} for the dataset \textit{2CCW} --- even though the error at 1.8~m is lower than at 2.4~m by almost 5~cm, there is a significant difference in the estimation process, and thus also in the AR experience. While at 2.4~m the error accumulates gradually, at 1.8~m the filter starts diverging several times and jumps back near its true position when a marker is detected.
     
     \begin{figure}
-        \includegraphics[width=12cm]{img/07_drift.png}
-        \caption{Similar error, different estimation}
+        \includegraphics[width=\textwidth]{img/07_drift.png}
+        \caption{Dataset \textit{2CCW} estimations at 2.3 m on the left, and 1.8 m on the right. Note that even though the mean error is lower at 1.8 m, the pose is drifting away in the highlighted areas; while the estimation at 2.3 m contains no drift.}
         \label{fig:07_drift}
     \end{figure}
     
@@ -528,7 +632,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     \autoref{fig:mean_error__per_threshold} shows the mean error per threshold for each dataset. Although we expected that with decreasing threshold, the error would gradually rise, the results do not fully follow this inverse proportionality.
     
     \begin{figure}
-        \includegraphics[width=12cm]{img/thresholds.png}
+        \includegraphics[width=\textwidth]{img/thresholds.png}
         \caption{TODO: Horizontally. Mean error per threshold plots for each dataset.}
         \label{fig:mean_error__per_threshold}
     \end{figure}
@@ -541,7 +645,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     With the threshold below 2~m, the estimation in all datasets often diverges by tens of meters. \autoref{fig:low_thresholds} contains plots showing the errors per frame in low thresholds for all datasets.
     
     \begin{figure}
-        \includegraphics[width=12cm]{img/low_thresholds.png}
+        \includegraphics[width=\textwidth]{img/low_thresholds.png}
         \caption{Errors per frame in low thresholds}
         \label{fig:low_thresholds}
     \end{figure}
@@ -576,7 +680,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     We added zero-mean Gaussian noise to the tag corner detections with the standard deviations of 2, 5, 8, 10, 15, and 20 pixels, and respectively raised the \textttt{PxStd} parameter, representing the squared pixel standard deviation in the EKF estimation. Since the value of this parameter in full visibility is 25 pixels, after corrupting the detection results with the noise of standard deviation $\sigma$, the resulting value for the PxStd is $25 + \sigma^2$. \autoref{fig:noise} shows the output of this simulation in a mean error per noise standard deviation plot for every dataset.
 
     \begin{figure}
-        \includegraphics[width=12cm]{img/noise.png}
+        \includegraphics[width=\textwidth]{img/noise.png}
         \caption{TODO: Horizontal pltos. Errors per noise standard deviation}
         \label{fig:noise}
     \end{figure}
@@ -601,18 +705,15 @@ The results on our datasets show that the pose estimation accuracy of the system
 From our experiments, we learned that for EKF-based systems, proper configuration is critical for satisfactory pose estimation. The experiment of adding noise to the detection showed that when the correct pixel standard deviation parameter is provided, the system can produce precise pose estimates even in a very turbid environment. However, these parameters are device dependent; finding them is not trivial and requires some experience. 
 
 \section{Future work}
-Since even a low number of markers is enough for quality estimates, future work will concentrate on analyzing datasets with sparsely placed markers. For this purpose, the RCARS visualization package is helpful, because it provides live pose estimation in a 3D workspace and an image preview that contains both the marker detections and the corresponding estimations. This tool can also be used for finding the appropriate EKF parameters for the device to minimize the bias caused by improper EKF configuration. 
+Since even a low number of markers is enough for quality estimates, future work could concentrate on analyzing datasets with sparsely placed markers. For this purpose, the RCARS visualization package is helpful, because it provides live pose estimation in a 3D workspace and an image preview that contains both the marker detections and the corresponding estimations. This tool can also be used for finding the appropriate EKF parameters for the device to minimize the bias caused by improper EKF configuration. 
 
-Furthermore, other devices can be used for testing, since the system is also affected by the field of view, the autofocusing system of the camera, and the camera and IMU synchronization.
+Furthermore, other devices could be used for testing, since the system is also affected by the field of view, the autofocusing system of the camera, and the camera and IMU synchronization.
 The intrinsic camera calibration depends on the field of view, which depends on the focusing distance. Thus, the calibration parameters can be obtained only for one focusing distance. However, when the camera's autofocus is enabled, the focusing distance changes throughout the dataset, causing the calibration parameters to be outdated. This problem can be tackled by saving the calibration parameters for various focusing distances and interchanging between them online during the detection.
-In the video recordings of our datasets, "focus breathing" of the autofocusing system occurred, which brings the tags temporarily out of focus, leading to detection loss. The “focus breathing” can be solved either by using a smartphone with a better autofocusing system or by disabling the autofocus and setting the focus to a proper distance. However, due to poor lighting conditions underwater, the cameras use large apertures leading to a shallower depth of field in the image, which increases the amount of blur in the background and the foreground; thus, possibly harming detection.
+In the video recordings of our datasets, \textit{focus breathing} of the autofocusing system occurred, which brings the tags temporarily out of focus, leading to detection loss. The “focus breathing” can be solved either by using a smartphone with a better autofocusing system or by disabling the autofocus and setting the focus to a proper distance. However, due to poor lighting conditions underwater, the cameras use large apertures leading to a shallower depth of field in the image, which increases the amount of blur in the background and the foreground; thus, possibly harming detection.
  
 Another possible source of bias in our experiment is the pose alignment between RCARS and the motion capture system. Thus, instead of using the absolute alignment into one coordinate frame, one could compare their relative measures, such as the angular velocity or the total distance covered.
  
-The future work will also concentrate on the development of markerless SLAM based solutions that detect natural features instead of markers. However, this may lead to higher computational demands on the mobile device in both the detection and the estimation. Moreover, simulating underwater conditions for such systems is a whole new challenge. 
-
-\todo{Too informal? :)}
-
+The future work could also concentrate on the development of marker-less SLAM based solutions that detect natural features instead of markers. However, this may lead to higher computational demands on the mobile device in both the detection and the estimation. Moreover, simulating underwater conditions for such systems is a whole new challenge.
 
 
 \printbibliography[heading=bibintoc] %% Print the bibliography.
