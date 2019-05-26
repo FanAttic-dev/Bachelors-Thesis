@@ -13,7 +13,7 @@
            %% with `notable` to restore plain LaTeX tables.
   lof,     %% This option prints the List of Figures. Replace with
            %% `nolof` to hide the List of Figures.
-  lot,     %% This option prints the List of Tables. Replace with
+  nolot,     %% This option prints the List of Tables. Replace with
            %% `nolot` to hide the List of Tables.
   %% More options are listed in the user guide at
   %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
@@ -77,51 +77,30 @@
 \begin{document}
 \renewcommand{\sectionautorefname}{Section}
 \chapter*{Introduction}
-    \addcontentsline{toc}{chapter}{Introduction}
-    \section{Introduction}
-    The seabed is often called the biggest museum in the world. Thousands of shipwrecks, ancient flooded cities, and other structures form our underwater cultural heritage. Because many of these objects are deprived of their context when exhibited on land, some sites offer \textit{in situ} experience, where scuba divers have the chance to experience them in their original surroundings \cite{unesco}. 
+\addcontentsline{toc}{chapter}{Introduction}
 
-    Immersive technologies are extensively used at such archaeological sites since they can present information connected to user's location, e.g., historical facts, visual navigation, or even provide an augmented reality view of the original state of the structure. A European Union project, named iMareCulture\footnote{https://imareculture.eu/}, is concerned about developing such applications. One branch of the project, which this thesis is a part of, aims at implementing virtual visits in augmented reality.
-    
-    As Aron et al. defined \cite{inertial_video}: ``Augmented reality (AR) systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly in the same space as the real world.'' A difficult task in AR is tracking, i.e., the real-time pose recovery from monocular video streams. Among other tracking methods \cite{fusion01}, there are two major ones that the thesis is dealing with:
-    
-    \begin{itemize}
-      \item Vision-based methods provide high accuracy but slow update rates and require line-of-sight between the camera and the markers;
-      \item Inertial tracking, performed by the sensors from the inertial sensor unit (IMU), provides high-frequency measurements but is unreliable to track position for long periods of time due to problems with sensor bias and drift.
-    \end{itemize}
-    
-    The goal of this thesis is the fusion of these two complementary approaches to get more accurate pose estimations than by using any of them alone. It extends an existing prototype of a vision-based AR application for Android phones and tablets. The application uses methods from ArUco library\footnote{ArUco is an OpenSource library for camera pose estimation using squared markers. \url{https://www.uco.es/investiga/grupos/ava/node/26}} with 2D barcode markers, detected by the camera, that are to be distributed in the archaeological site. For sensor fusion, a common data fusion algorithm that combines and smooths the measured values - the Kalman filter - is utilized.
-    
-    The first chapter discusses the available AR platforms with references to related works. The next two chapters introduce the theoretical background of the tracking methods, the relations between the coordinate frames, and the Kalman filtering.
-    
-    The fourth chapter is about experiments. Firstly, it presents the technical equipment and testing conditions. Secondly, it shows the Kalman filter performance from more straightforward cases (only a single marker with accelerometer) to the complex ones, when all IMU sensors along with multiple markers are involved. Successively, motion tracking is used as ground-truth, and several non-linear variants, such as the Extended and Unscented Kalman filter, are built and compared to each other.
-    
-    In the last chapter, an upgraded working prototype of the AR application is tested in the Underwater Archaeological Park of Baia in Italy. The quality of the prototype is discussed, and gives suggestions for future development.
+Augmented reality (AR) is one of the most promising technologies of the present, even though it was grounded already in 1968, when Ivan Sutherland introduced the head-mounted display \cite{68Sutherland}. Since that time, extensive research was conducted on one of the base problems of AR: determining the position and orientation of the device relative to its environment, called the pose estimation problem. Only in recent years, the advances in mobile computing and the release of various AR frameworks, such as ARCore \cite{ARcore}, ARKit \cite{ARkit}, and Vuforia \cite{Vuforia}, allowed delivering a truly seamless AR experience on smartphones. These frameworks are able to leverage the images from the camera and the inertial sensors to produce accurate pose estimates of the device. Hence, the rendered objects appear to coexist seamlessly with the real world. AR has many applications in our lives; for example, in education \cite{ARedu}, healthcare \cite{ARhealth}, or game industry \cite{ARgame}. Another area where AR has the potential to be utilized is the underwater world, which is one of the main aims of the project iMareCulture. It intends to promote the underwater cultural heritage through the use of immersive technologies, so that, for example, tourist scuba divers can explore the archaeological sites \textit{in situ}, with an original reconstruction of the site rendered on the screen of a mobile device.
 
-\chapter{Abstract}
-\section{English}
-This thesis analyzes the effect of underwater conditions on a chosen pose estimation system that solves the task of determining the position and orientation of the device in its environment. Within the project iMareCulture, it contributes to the application of augmented reality in underwater museums.
+However, utilizing AR underwater is even nowadays an open problem. The underwater environments often suffer from poor visibility conditions, water turbidity, or no GPS signal, which does not allow the popular AR platforms to perform as accurately as on land. Even though there exist some underwater localization systems, they are expensive, require the use of external equipment, and are too robust for mobile AR.
 
-First, a marker-based visual-inertial robotic pose tracking system that uses the extended Kalman filter (EKF) is utilized for the use with smartphone recordings. Second, the underwater environment is simulated in post-processing of the marker detection results by (1) discarding the detected markers according to their distance to simulate poor visibility, and (2) by corrupting the detected tag corners by artificial noise to simulate water turbidity. The simulations take place in a laboratory equipped with an external motion capture system as ground truth for evaluating the accuracy of the pose estimated by the utilized system.
+Within the iMareCulture project, this thesis contributes to the research of underwater AR by analyzing the effect of underwater conditions on the current pose estimation systems. The focus is on marker-based visual-inertial pose tracking systems that use Kalman filtering for sensor fusion. First, a robotic pose estimation system is utilized for the use with smartphone measurements. Second, the pose estimation accuracy in underwater environments is evaluated on various datasets. However, evaluating the experiments directly underwater is difficult due to the absence of ground truth; instead, the underwater conditions are simulated in the controlled environment of a laboratory equipped with a motion capture system. Poor visibility and water turbidity are simulated by post-processing the datasets. Then, the obtained pose estimates are compared to the motion capture measurements, serving as ground truth reference. Finally, conclusions are drawn about the relationship between the simulations and the pose estimation accuracy.
 
-The results show that the tracking accuracy does not significantly change with a decreasing number of detected markers. Thus, the markers can be placed more sparsely in the environment, or the system can discard redundant markers to reduce the computational cost. Furthermore, provided correct EKF settings, the system produces accurate pose estimates even with a high amount of noise corruption, simulating a very turbid environment.
-
-\section{Slovak}
+The thesis is structured as follows. The first chapter introduces the background of this thesis, which is the iMareCulture project. The second chapter gives an overview of the pose estimation techniques and discusses their use underwater. The third chapter describes a widely used sensor fusion algorithm, the Kalman filter. The fourth chapter introduces our method of simulating underwater environments. Finally, the fifth chapter describes our experiments and draws conclusions based on the resutls.
+\todo[inline]{references}
 
 \chapter{Background}
-    \begin{figure}
-        \includegraphics[width=10cm]{img/Baia2.jpg}
-        \caption{A tablet housed in a waterproof case showing an original reconstruction of Villa a Protiro.}
-        \label{fig:baia2}
-    \end{figure}
-
     The seabed is often called the biggest museum in the world. Throughout the history of human civilizations, entire cities have been flooded, and thousands of ships have sunken to the bottom of the lakes, seas, and oceans. In this subaqueous environment, they have been safely protected for thousands of years. Now they are a part of our cultural heritage in the same way as the heritage on land.
     
-    Advances in technology have made the underwater world more accessible and therefore brought these sites within reach. The visitors are offered in situ experiences, which include dive trails, submersible tours for non-divers, and underwater museums \cite{unesco_online}.
+    Advances in technology have made the underwater world more accessible and therefore brought these sites within reach. The visitors are offered \textit{in situ} experiences, which include dive trails, submersible tours for non-divers, and underwater museums \cite{unesco_online}.
     
-    \textbf{Project iMare-Culture} focuses on promoting them to the wide public through the use of interactive technologies, virtual reality (VR), augmented reality (AR), and serious games\footnote{A serious game is a game designed for a primary purpose other than pure entertainment.}; all designed by scientists, researchers, archaeologists, and museum experts coming from eight Mediterranean countries.
+    This thesis is a part of the \textbf{iMare-Culture} project, which focuses on promoting them to the wide public through the use of interactive technologies, virtual reality (VR), augmented reality (AR), and serious games\footnote{A serious game is a game designed for a primary purpose other than pure entertainment.}; all designed by scientists, researchers, archaeologists, and museum experts coming from eight Mediterranean countries. \autoref{fig:baia} shows an example of AR utilization underwater. 
     
-    This thesis is a part of augmented reality research for this project. Figure \ref{fig:baia2} shows an example of AR usage, where the scuba diver is holding a tablet housed in a waterproof case, and observing an original reconstruction of Villa a Protiro in the Archaeological Underwater Park of Baia, Italy.
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=.5\textwidth]{img/Background/Baia2.jpg}
+        \caption{First pilot test of the underwater AR tablet in Baiae, Italy. AR could be in the future used underwater by tourist scuba divers to explore archaeological sites \textit{in situ} and, for example, observe their original reconstructions on the screen of a mobile device. From iMareCulture \url{https://imareculture.eu}}
+        \label{fig:baia}
+    \end{figure}
 
 \chapter{Pose estimation for Augmented Reality}
 As Azuma defined in 1997, AR systems supplement the real world with virtual (computer-generated) objects that appear to coexist seamlessly with the real world. Besides aligning real and virtual objects with each other, these systems have to be interactive and real time \cite{97azuma}. In contrast with VR, where the user is immersed in a virtual environment, AR allows interaction with virtual objects in a seamless way.
@@ -144,6 +123,7 @@ This chapter gives an overview of the popular pose estimation techniques and the
     \todo[inline]{Tracking methods detect the distinctive features in the image, some of which may be natural, other artifical. The techniques that rely on artificial features are called marker-based}
 
         \subsection{Camera calibration}
+        When capturing the calibration images, we were following the MATLAB camera calibration workflow\footnote{\url{https://www.mathworks.com/help/vision/ug/single-camera-calibrator-app.html}}. According to this workflow, between 10 and 20 images of the checkerboard pattern should be used to achieve a good camera calibration. In addition, the images should be captured at a distance roughly equal to the camera distance from the objects of interest, without using autofocus or changing the zoom settings between images. Furthermore, since lens distortion increases radially from the center of the image and sometimes is not uniform across the image frame, the images should be taken at different orientations relative to the camera and the pattern must appear close to the edges of the captured images.
         \todo[inline]{... When the image is rectified, the it can be used for marker detection. The targets of the detector are either markers (marker-based tracking) or distinctive features in the image (marker-less tracking). }
         
         \begin{figure}
@@ -190,9 +170,7 @@ This chapter gives an overview of the popular pose estimation techniques and the
         \end{figure}
         
         \subsection{Marker-based tracking}
-        Marker-based tracking methods simplify the problem of detecting 3D objects by detecting only 2D artificial markers that are easy to recognize \cite{19Cejka}. 
-        
-        The most dominant technique in marker-based tracking is detecting square markers. They are easy and fast to detect and contain enough information to compute their relative pose to the camera. Examples of some software libraries are ARToolKit \cite{ARToolKit}, ARTag \cite{ARTag}, ARUco \cite{ARUco}, AprilTag \cite{AprilTag}. 
+        Marker-based tracking methods simplify the problem of detecting 3D objects by detecting only 2D artificial markers that are easy to recognize \cite{19Cejka}. The most dominant technique in marker-based tracking is detecting square markers. They are easy and fast to detect and contain enough information to compute their relative pose to the camera. Examples of some software libraries are ARToolKit \cite{ARToolKit}, ARTag \cite{ARTag}, ARUco \cite{ARUco}, AprilTag \cite{AprilTag}. 
         
         \autoref{fig:Markers} shows that besides square markers, other types of markers are also used in AR \cite{RUNETag, Intersence, reacTIVision, CCTag, FourierTag}. For example, the shape of circular \cite{Intersence} or elliptic markers \cite{Ellipse} provides more information about the position than in the case of square markers. Thus, they can be detected even when they are partially occluded; however, this is paid by higher processing time.
         
@@ -204,40 +182,24 @@ This chapter gives an overview of the popular pose estimation techniques and the
         Examples of algorithms for natural features detection used in augmented reality are: SIFT \cite{SIFT}, SURF detector \cite{SURF}, and FAST \cite{FAST}. Marker-less tracking is further used in simultaneous localization and mapping (SLAM) solutions described in \autoref{subsec:SLAM} on page~\pageref{subsec:SLAM}.
         
         \subsection{Underwater visual tracking} \label{subsec:underwater_visual}
-        Underwater localization from vision is still an open problem, and the state-of-the-art algorithms in visual odometry or SLAM do not give satisfactory results \cite{17Weidner}. 
-        Most of the difficulties arise due to visual degradations caused by the medium. The strong light absorption shortens the visual perception to a few meters and makes the presence of an artificial lighting system mandatory when operating in deep waters. The propagation of light is scattered by floating particles, causing turbidity effects on the captured images. The artificial light attracts the animals, and they tend to get in the field of view of the camera, which leads to occlusions in the images.
+        Underwater localization from vision is still an open problem, and the state-of-the-art algorithms in visual odometry or SLAM do not give satisfactory results \cite{17Weidner}. Most of the difficulties arise due to visual degradations caused by the medium. The strong light absorption shortens the visual perception to a few meters and makes the presence of an artificial lighting system mandatory when operating in deep waters. The propagation of light is scattered by floating particles, causing turbidity effects on the captured images. The artificial light attracts the animals, and they tend to get in the field of view of the camera, which leads to occlusions in the images.
         
     \section{Inertial tracking}
-    Most smartphones contain an Inertial Measurement Unit (IMU) for monitoring the body's movement or orientation in 3D space with respect to the Earth coordinate system. The IMU consists of a triple axis accelerometer and a triple axis gyroscope, as depicted in \autoref{fig:AndroidIMU}. 
+    Most smartphones contain an Inertial Measurement Unit (IMU) for monitoring the body's movement or orientation in 3D space with respect to the Earth coordinate system. The IMU consists of a triple axis accelerometer and a triple axis gyroscope.
+    
     The accelerometer senses the acceleration of the sensor along of each input axis, while the gyroscope measures the angular velocity around each input axis. Together, they form a 6 DoF (Degrees of Freedom) tracking system, providing movement tracking in 3 axes plus rotation in 3 axes (pitch, roll, yaw). Sometimes a third set of sensors, magnetometers, is added for heading reference (the yaw axis), measuring the Earth's magnetic field. However, since they are easily disturbed by any nearby metallic substance, they are often neglected in pose estimation systems \cite{08ISMAR}.
     
-    \begin{figure}
-        \includegraphics[width=6cm]{img/AndroidIMU.png}
-        \caption{Coordinate system (relative to a device) that's used by the Android Sensor API.\protect\footnotemark}
-        \label{fig:AndroidIMU}
-        \todo[inline]{My picture or image taken from}
-    \end{figure}
-    \footnotetext{\url{https://developer.android.com/guide/topics/sensors}}
+    \subsection{MEMS} \label{subsec:MEMS}
+    As opposed to the traditional mechanical IMUs, the IMUs in smartphones are based on MEMS (Microelectromechanical systems) technology. On the one hand, this makes them lightweight, compact, power-efficient, and less expensive, thus well suited for mobile computing. On the other hand, due to imperfections of the manufacturing and physical characteristics of the sensors, real IMU measurements are usually affected by random noise and systematic errors, such as the bias (the offset of the sensor measurement from the physical input), inaccurate scale factor (the relation between input and output), axis misalignments, or g-sensitivity \cite{19Xiao, 94Titteron, 03Nassar}. These errors may significantly influence the performance of visual-inertial methods.
     
-    \subsection{MEMS}
-    As opposed to the traditional mechanical IMUs, the IMUs in smartphones are based on MEMS (Microelectromechanical systems) technology. On the one hand, this makes them lightweight, compact, power-efficient, and less expensive, thus well suited for mobile computing. On the other hand, due to imperfections of the manufacturing and physical characteristics of the sensors, real IMU measurements are usually affected by random noise and systematic errors, such as bias, inaccurate scale factors, axis misalignments, and g-sensitivity \cite{19Xiao, 94Titteron, 03Nassar}. These errors may significantly influence the performance of visual-inertial methods.
-    
-    The following example illustrates these errors on the accelerometer: The accelerometer measures proper accelerations that are accelerations relative to free fall. For example, if the device is laying flat on the table, the accelerometer should measure an acceleration of $1g \approx \SI{9.81}{\metre\per\square\second}$ away from the center of the Earth. In contrast, when the device is in free fall, it should measure zero. However, as shown in \autoref{fig:imu_errors}, due to the bias of \SI{-0.06}{\metre\per\square\second} and random noise of \SI{0.02}{\metre\per\square\second}, the measured acceleration is \SI{9.77}{\metre\per\square\second}.
-
-    \begin{figure}
-        \includegraphics[width=10cm]{img/IMU_errors.png}
-        \caption{The bias (the offset of the sensor measurement from the physical input), noise (or gain is the random noise that affects the sensor measurements), and the scale factor (the relation between input and output) \cite{novatel}.}
-        \label{fig:imu_errors}
-    \end{figure}
+    The following example illustrates these errors on the accelerometer: The accelerometer measures proper accelerations that are accelerations relative to free fall. For example, if the device is laying flat on the table, the accelerometer should measure an acceleration of $1g \approx \SI{9.81}{\metre\per\square\second}$ away from the center of the Earth. In contrast, when the device is in free fall, it should measure zero. However, due to the bias of \SI{-0.06}{\metre\per\square\second} and random noise of \SI{0.02}{\metre\per\square\second}, the measured acceleration is \SI{9.77}{\metre\per\square\second}.
     
     Thus, the sensor measurements are modeled as follows:
     \begin{align} 
         a_m &= (a - g) + b_a + n_a \\
         w_m &= w + b_\omega + n_\omega
     \end{align}
-    where $a_m$ and $w_m$ are the raw measurements of accelerometer and gyroscope, respectively; $a$ and $w$ are linear acceleration and angular velocity of the body frame, $g$ is the gravity vector, $b_a$ and $b_\omega$ are the accelerometer and gyroscope biases, and $n_a$ and $n_\omega$ are the measurement noises.
-    
-    For other IMU measurement models involving scale factors, axis misalignment, g-sensitivity, etc., please refer to \cite{16Rehder}.
+    where $a_m$ and $w_m$ are the raw measurements of accelerometer and gyroscope, respectively; $a$ and $w$ are linear acceleration and angular velocity of the body frame, $g$ is the gravity vector, $b_a$ and $b_\omega$ are the accelerometer and gyroscope biases, and $n_a$ and $n_\omega$ are the measurement noises. For other IMU measurement models involving scale factors, axis misalignment, g-sensitivity, etc., please refer to \cite{16Rehder}.
     
     \subsection{IMU Calibration}
     IMU calibration is used to identify the value of bias and other intrinsic parameters of sensors for compensating the measurement errors \cite{19Xiao}. It is performed by comparing the raw measurements to some known reference values and minimizing the differences between them. The reference calibration values can be estimated offline or online. 
@@ -262,10 +224,10 @@ This chapter gives an overview of the popular pose estimation techniques and the
     On the other hand, the inertial navigation systems are not accurate in slow rotational and translational motions due to bias and drift which is compensated by the high accuracy of the optical tracking system.
     
     Several approaches are addressing the visual-inertial estimation problem. Leutenegger \cite{15Leutenegger} separates them in two ways. First, the methods can be divided into batch nonlinear optimization methods and recursive filtering methods. Second, the two other categories of approaches found in the literature are described in \cite{15Leutenegger} as follows:
-    \begin{itemize}
-        \item loosely coupled systems - they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
-        \item tightly coupled approaches - they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
-    \end{itemize}
+    \begin{description}
+        \item [loosely coupled systems] they independently estimate the pose by a vision-only algorithm and fuse IMU measurements only in a separate estimation step, limiting computational complexity;
+        \item [tightly coupled approaches] they, in contrast, include both the measurements from the IMU and the camera into a common problem where all states are jointly estimated, thus considering all correlations amongst them.
+    \end{description}
     In this thesis, the tracking system is based on the recursive filtering of the extended Kalman filter, and the tightly coupled approach, which proved to be essential for any high-precision visual-inertial navigation system, and is implemented in most high-accuracy visual-inertial systems estimators \cite{13Leutenegger}.
     
     \subsection{SLAM} \label{subsec:SLAM}
@@ -286,53 +248,69 @@ This chapter gives an overview of the popular pose estimation techniques and the
     However, at close-range, acoustic systems do not provide accurate enough localization information, whereas visual sensing can be highly effective \cite{18Palomeras}. Nevertheless, as discussed in \autoref{subsec:underwater_visual}, the captured images are degraded by turbidity. Furthermore, the information delivered by sonar is not as rich as optical images \cite{15BoninFont}, and remains very challenging to analyze.
     
 \chapter{Kalman filtering}
-Filters are used to continuously estimate the state of the system, given noisy sensor measurements. The system's state can be formed by, for example, position, velocity, or orientation of the system. Motion models describe how the system's state changes over time. The filter's task is to fuse the measurements from the sensors and the information from the motion model in the best possible way to calculate the new state estimate \cite{17Fahreus}. In the context of the pose estimation in this thesis, the measurements represented by the images from the camera and the inertial sensor readings.
+Filters are used to continuously estimate the state of the system, given noisy sensor measurements. The system's state can be formed by, for example, position, velocity, or orientation of the system. Motion models describe how the system's state changes over time. The filter's task is to fuse the measurements from the sensors and the information from the motion model in the best possible way to calculate the new state estimate \cite{17Fahreus}. 
 
-The Kalman filter happens to perform the filtering in a statistically optimal way. It was introduced in 1960 by R. E. Kálmán in his famous paper \cite{60Kalman}, describing a recursive solution to the discrete data linear filtering problem. Probably the most famous early use of the Kalman filter was in the Apollo 11 Guidance Computer that helped Neil Armstrong to go to the Moon and back \cite{Apollo}. Since that time, due to the advances in technology, it has become extensively researched and applied in navigation systems, robotics, or computer vision, and today, it can be found in every smartphone.
+The Kalman filter happens to perform the filtering in a statistically optimal way. It was introduced in 1960 by R. E. Kálmán in his famous paper \cite{60Kalman}, describing a recursive solution to the discrete data linear filtering problem. Probably the most famous early use of the Kalman filter was in the Apollo 11 Guidance Computer that helped Neil Armstrong to go to the Moon and back \cite{Apollo}. Since that time, it has become extensively researched and applied in navigation systems, robotics, or computer vision, and today, it can be found in every smartphone.
 
-There are several reasons why the Kalman filter is so popular \cite{95Intro,09Pose}:
+There are many reasons why the Kalman filter is still so popular
+\cite{95Intro,09Pose}: 
 \begin{itemize}
     \item It is light on memory --- in contrast to batch estimation techniques (e.g., the Wiener filter \cite{Wiener}), which operates on \textit{all} of the data \textit{directly} for each estimate, the Kalman filter is a recursive algorithm and does not need to keep any history of measurements and/or estimates.
     \item It is fast --- due to its low computational cost, it is well suited for real-time problems and embedded systems.
-    \item It is able to estimate a hidden system state, i.e., when the state is not directly measurable. The Kalman filter can combine the measurements from multiple sensors to incorporate the missing data and make the state globally observable.
-    \item It can handle unsynchronized measurements.
+    \item It can estimate a hidden system state --- when the state is not directly measurable, the Kalman filter combines the measurements from multiple sensors to incorporate the missing data and make the state globally observable.
+    \item It can handle unsynchronized measurements --- convenient for fusing low-frequency camera images with high-frequency IMU measurements.
 \end{itemize}
 
 \section{Dynamical model}
-In order to use a Kalman filter to remove noise from a signal, the process that we are measuring must be able to be described by a linear system. At each (discrete) time increment, the new state is generated by applying a linear operator to the previous state, adding some noise to cope with changes in the state that are not modeled.
+In order to use a Kalman filter to remove noise from a signal, the process that we are measuring must be able to be described by a linear system. At each (discrete) time increment, the new state is generated by applying a linear operator to the previous state, optional control inputs on the system, and adding some noise to cope with changes in the state that are not modeled, according to
 
-\begin{equation}
-    x_k = A x_{k-1} + B u_{k-1} + w_{k-1}
+\begin{equation} \label{eq:KFlinState}
+    x_k = A x_{k-1} + B u_{k-1} + w_{k-1},
 \end{equation}
-\begin{equation}
-    z_k = H x_k + v_k
+
+and a new measurement is represented by
+
+\begin{equation} \label{eq:KFlinMeas}
+    z_k = H x_k + v_k,
 \end{equation}
-Where:
+
+where
 \begin{itemize}
     \item $x_k$ is the state vector at time $k$;
     \item $A$ is the state transition matrix which relates the previous time step $k-1$ to the state at the current step $k$;
-    \item $u$ is the control input vector at time $k$;
+    \item $u_{k}$ is the control input vector at time $k$;
     \item $B$ is the control input matrix which relates the control input $u$ to the state $x$;
+    \item $w_k$ is the process noise which is assumed to be drawn from a zero mean multivariate normal distribution, $\mathcal{N}$, with covariance $Q_k: w_k \sim \mathcal{N}(0,Q_k)$;
     \item $z_k$ is the measurement vector at time $k$;
     \item $H$ is the transformation matrix that maps the state vector into the measurement domain;
-    \item $w_k$ is the process noise at time $k$ which is assumed to be drawn from a zero mean multivariate normal distribution, $\mathcal{N}$, with covariance 
-    $Q_k: w_k \sim \mathcal{N}(0,Q_k)$.
-    \item $v_k$ is the measurement noise at time $k$ which is, similarly to $w_k$, assumed to be drawn from a zero mean multivariate normal distribution, $\mathcal{N}$, with covariance 
-    $R_k: v_k \sim \mathcal{N}(0,R_k)$.
+    \item $v_k$ is the measurement noise which is, similarly to $w_k$, assumed to be drawn from a zero mean multivariate normal distribution, $\mathcal{N}$, with covariance 
+    $R_k: v_k \sim \mathcal{N}(0,R_k)$. However, it is assumed that $v_k$ and $w_k$ are mutually independent to apply this model in the KF.
 \end{itemize}
 
-The initial state, and the noise vectors at each step are all assumed to be mutually independent.
-
-In pose estimation systems, the state vector usually contains the position, velocity, and orientation of the device. In addition, often the sensor biases are also included, which represent the hidden parameters in the state, i.e., we cannot measure them but the KF estimates them.
+In pose estimation systems, the state vector usually contains the position, velocity, and orientation of the device. Also, the state often contains the sensors biases estimated online, as described in \autoref{subsec:MEMS}. The measurements are represented by the images from the camera and the inertial sensor readings.
 
 \section{Algorithm}
+The Kalman filter combines the prediction and the measurement to find the optimal state estimate in the presence of process and measurement noise. It operates recursively in a cycle: it first \textbf{predicts} an \textit{a~priori} state estimate $\hat{x}_k^-$ based on the dynamic model; and then it receives a noisy measurements $z_k$ from the sensor and uses the difference between the $\hat{x}_k^-$ and $z_k$ as a feedback to optimally \textbf{update} the \textit{a priori} state estimate into an \textit{a~posteriori} state estimate $\hat{x}_k$ \cite{95Intro}.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=.65\textwidth]{img/KF/Cycle.eps}
+    \caption{The ongoing Kalman filter cycle. The prediction stage projects the current state estimate ahead in time forming the \textit{a~priori} state estimate, which is then improved by the measurements in the update stage to form the \textit{a~posteriori} state estimate.}
+    \label{fig:KFcycle}
+\end{figure}
+
+Since the Kalman filter takes into account also the noises, the state of the filter is represented not only by the (\textit{a posteriori}) state estimate $\hat{x}_k$, but also by its corresponding (\textit{a posteriori}) error covariance matrix $P_k$, which holds the estimated accuracy of the state estimate such that
+\begin{equation}
+    P_k = E[(x_k - \hat{x}_k) (x_k - \hat{x}_k)^T].
+\end{equation}
+
+Here are presented the equations used in the two stages of the Kalman filter.
 \begin{enumerate}
-    \item Predict:
+    \item Prediction:
         \begin{equation}
             \hat{x}_k^- = A \hat{x}_{k-1} + B u_{k-1}
         \end{equation}
-        \begin{equation}
+        \begin{equation} \label{eq:KFprocessNoise}
             P_k^- = A P_{k-1}A^T + Q_k
         \end{equation}
         
@@ -340,34 +318,87 @@ In pose estimation systems, the state vector usually contains the position, velo
             \item $\hat{x}_k^-$ is the predicted (\textit{a priori}) state estimate;
             \item $P_k^-$ is the predicted (\textit{a priori}) estimate error covariance.
         \end{itemize}
+        
+        The prediction stage projects forward in time, estimating the current state and error covariance to obtain the a priori estimates.
     \item Update:
-        \begin{equation}
+        \begin{equation} \label{eq:KFkalmanGain}
             K_k = P_k^- H^T (H P_k^- H^T + R_k)^{-1}
         \end{equation}
-        \begin{equation}
-            \hat{x}_k = \hat{x}_k^- + K_k (z_k - H\hat{x_k}^-)
+        \begin{equation} \label{eq:weighted_avg}
+            \hat{x}_k = \hat{x}_k^- + K_k (z_k - H \hat{x}_k^-)
         \end{equation}
-        \begin{equation}
+        \begin{equation} \label{eq:KFprocessNoisePost}
             P_k = (I - K_k H) P_k^-
         \end{equation}
-        
         \begin{itemize}
             \item $K_k$ is the Kalman gain at time $k$;
-            \item $\hat{x}_k^-$ is the updated (\textit{a posteriori}) state estimate;
+            \item $\hat{x}_k^-$ is the updated (\textit{a~posteriori}) state estimate.
         \end{itemize}
+        The update stage incorporates new measurements into the \textit{a~priori} estimates to obtain an improved \textit{a posteriori} estimate.
         
-    \todo[inline]{\begin{itemize}
-        \item Predict, update
-        \item $(z_k - H\hat{x_k}^-)$ is the measurement post-fit residual.
-        \item Kalman gain
-    \end{itemize}
-    }
-        
+        Notice that the \textit{a~posteriori} state estimate $\hat{x}_k$ in \ref{eq:weighted_avg} is obtained as a \textbf{weighted average} between the \textit{a~priori} state estimate $\hat{x}_k^-$ and the measurement residual. The purpose of the weights is that they decide based, which of either the estimate or measurement to ``trust more'' \cite{KalmanWiki}. The Kalman gain is computed based on their uncertainties, so values with better (i.e., smaller) estimated uncertainty are trusted more. Hence, if the prediction is accurate, the Kalman gain cancels out the effect of new measurements, and vice versa.
 \end{enumerate}
 
+This process is repeated at every time step, with the new estimate and its covariance informing the prediction used in the following iteration. This means that the Kalman filter works recursively and requires only the last ``best guess'', rather than the entire history, of a system's state to calculate a new state. \todo{Just wiki, rewrite}
+
+\subsection{Kalman filter parameters} \label{subsec:KFparams}
+Since the filtering process starts with an initial state defined by the user, the accuracy of this state can influence the performance of the Kalman filter. Determining the values in the measurement noise covariance matrix $R$ is usually possible and practical because we use the measurement device and are able to get the measurement noise by a calibration routine \cite{95Intro}. On the other hand, finding the process noise covarinace matrix $Q$ is usually more difficult because we are often estimating a process that is not directly observable. Thus, it is often tuned by trial and error; however, as Welch and Bishop state \cite{95Intro}: ``In either case, whether or not we have a rational basis for choosing the parameters, often times superior filter performance (statistically speaking) can be obtained by tuning the filter parameters $Q$ and $R$.''
+
 \section{Non-linear systems}
-\subsection{Extended Kalman Filter}
-\subsection{Unscented Kalman Filter}
+The presented basic for of the Kalman filter is limited to linear systems. However, many systems used in practice are non-linear and some of the most interesting and successful applications of Kalman filtering have been in such situations. This section briefly presents the two most popular non-linear Kalman filters: the Extended Kalman filter and the Unscented Kalman filter.
+
+\subsection{Extended Kalman filter}
+The Extended Kalman filter (EKF) can contain \textit{non-linear} functions in the state transition and measurement models, but these functions have to be of differentiable type. 
+The system dynamics is then modeled as follows
+
+\begin{equation}
+    x_k = f(x_{k-1}, u_{k}) + w_{k},
+\end{equation}
+
+and a new measurement is represented by
+
+\begin{equation}
+    z_k = h(x_k) + v_k,
+\end{equation}
+
+In this case, $f$ and $h$ are \textit{non-linear} functions. Hence, the covariances cannot be obtained as in (\ref{eq:KFprocessNoise}), (\ref{eq:KFkalmanGain}), and (\ref{eq:KFprocessNoisePost}). Therefore, the EKF linearizes about the mean of the current estimate and covariance, by computing the following Jacobians\footnote{The Jacobian matrix is a matrix of first-order partial derivatives.}
+
+\begin{equation}
+    F_k=\left.\frac{\partial f}{\partial x}\right|_{\hat{x}_{k-1}^-, \hat{u}_k}
+\end{equation}
+\begin{equation}
+    H_k=\left.\frac{\partial h}{\partial x}\right|_{\hat{x}_{k-1}}.
+\end{equation}
+
+The predict and update equations are as follows
+\begin{enumerate}
+    \item Prediction:
+        \begin{equation}
+            \hat{x}_k^- = f(x_{k-1}, u_{k})
+        \end{equation}
+        \begin{equation} \label{eq:EKFprocessNoise}
+            P_k^- = F_k P_{k-1} F_k^T + Q_k
+        \end{equation}
+        
+    \item Update:
+        \begin{equation} \label{eq:KFkalmanGain}
+            K_k = P_k^- H_k^T (H_k P_k^- H_k^T + R_k)^{-1}
+        \end{equation}
+        \begin{equation} \label{eq:weighted_avg}
+            \hat{x}_k = \hat{x}_k^- + K_k (z_k - H_k \hat{x}_k^-)
+        \end{equation}
+        \begin{equation} \label{eq:KFprocessNoisePost}
+            P_k = (I - K_k H_k) P_k^-.
+        \end{equation}
+\end{enumerate}
+
+The drawbacks of the EKF include that it requires complicated derivatives if done analytically, or is computationally costly if done numerically. Also, due to linearization, the functions have to be differentiable; or, even when a function differentiable but highly non-linear, the EKF performance is poor \cite{UKF}.
+
+\subsection{Unscented Kalman filter}
+The unscented Kalman filter (UKF) \cite{UKF} does not solve the non-lineary by linearization, but by a deterministic sampling techcnique, called the unscented transformation. It selects a minimal set of sample points, called sigma points, so that that their mean and covariance is the same as the normal distribution. The sigma points are then fed though the non-linear functions, from which a new mean and covariance estimate are then formed.
+
+However, as Caarls concludes \cite{09Pose}, ``the UKF implementation is more time consuming because instead of one non-linear transformation in the EKF, all sigma points are subject to the same non-linear transformation.'' LaVoila \cite{lavoila} aggrees by showing that the EKF is more suitable for VR orientation tracking than the UKF.
+\todo[inline]{shorten}
 
 
 \chapter{Localization in a simulated underwater environment}
@@ -386,6 +417,7 @@ When choosing a suitable solution for underwater localization in the context of 
     \textbf{RCARS} (Robot-Centric Absolute Reference System) is a fiducial-based, visual-inertial EKF-SLAM pose estimation system,  introduced by Neunert et al. in 2016 \cite{15Neunert}. As the authors claim, coupling SLAM and fiducial based estimation resulted in a leaner estimation and smaller map sizes, which makes the system more lightweight. Moreover, they state that the system is robust against fast motions and provides accurate estimates even in changing lighting conditions.
 
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/RCARS/RCARS-nodes.eps}
         \caption{RCARS nodes and topics exchanged between them. The detector finds the tags in the images, the estimator calculates the device pose, and the visualization node shows the results in a 3D workspace.}
         \label{fig:RCARSNodes}
@@ -409,6 +441,7 @@ When choosing a suitable solution for underwater localization in the context of 
     The visualizer uses the  RViz\footnote{\url{http://wiki.ros.org/rviz}} tool for a 3D visualization of the workspace, as well as an image preview. As seen in \autoref{fig:rviz}, the image preview shows the tag corner detections and their corresponding estimations separately. The RViz tool is useful for analyzing the estimation process and identifying the cases when outliers occur.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/RCARS/rviz3.png}
         \caption{RViz provides a 3D visualization of the workspace, as well as image previews with tag corner detections.}
         \label{fig:rviz}
@@ -418,12 +451,13 @@ When choosing a suitable solution for underwater localization in the context of 
     The drawback of RCARS is that it runs only on a computer. Thus, the pose estimation cannot be realized online on the Android smartphone used in this thesis, which leads to a series of steps that need to be  taken in order to obtain the pose estimates from RCARS. This workflow is depicted in \autoref{fig:workflow_pose}.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/RCARS/workflow_pose.eps}
         \caption{Our pose estimation workflow. First, the smartphone recordings are converted into a bag file. Second, RCARS is run on undistorted images. Third, RCARS outputs the pose estimate that can be visualized or saved for evaluation.}
         \label{fig:workflow_pose}
     \end{figure}
     
-    \subsection{Input data}
+    \subsection{Input data} \label{subsec:input_data}
     First, the measurements from the smartphone have to be set as input for RCARS. ROS provides packages\footnote{\url{http://wiki.ros.org/rosserial}} for communication with the serial ports of electronic devices connected to the computer, allowing live sending of data to ROS; however, these packages are built mainly for microcontrollers such as Arduino. Although there is also a driver\footnote{\url{http://wiki.ros.org/android_sensors_driver}} for a  wireless communication with Android devices, it supports only sending GPS and IMU measurements, not the camera images that are needed here.
 
     Therefore, in our experiment, we first need to record the datasets and then convert the image and the IMU measurements into a proper input format to allow sending them in the ROS ecosystem.
@@ -432,68 +466,69 @@ When choosing a suitable solution for underwater localization in the context of 
 
     To run RCARS on our measurements, we save them into a \textit{bag}\footnote{\url{http://wiki.ros.org/Bags}} file as ROS \textit{messages}. The bag is a file format for storing ROS message data. The conversion is realized by the \texttt{phone\_to\_bag.py} Python script that uses the \textit{rosbag} Python API\footnote{\url{http://wiki.ros.org/rosbag/Code\%20API\#py_api}} to write into bag files. The messages are stored in a new bag file in the following topics:
     \begin{description}
-        \item [\textbf{camera\_info}] holds the camera metadata, such as the intrinsic calibration parameters or the image resolution;
-        \item [\textbf{image\_raw}] holds the raw camera images;
-        \item [\textbf{imu}] holds the accelerometer and gyroscope measurements.
+        \item [\texttt{camera\_info}] holds the camera metadata, such as the intrinsic calibration parameters or the image resolution;
+        \item [\texttt{image\_raw}] holds the raw camera images;
+        \item [\texttt{imu}] holds the accelerometer and gyroscope measurements.
     \end{description}
 	
-    The script synchronizes the IMU with the images based on their timestamps. Note that RCARS allows using only one sampling frequency for the IMU measurements. For example, in the case of the iMareCameraRecorder, even though it records the accelerometer at 400Hz and the gyroscope at 200Hz, the accelerometer had to be downsampled to 200Hz to match the frequency of the gyroscope. In addition, we use the \textit{rosbag}\footnote{\url{http://wiki.ros.org/rosbag}} tools for recording and playing back bag files.
+    The script synchronizes the IMU with the images based on their timestamps. Note that RCARS allows using only one sampling frequency for the IMU measurements. For example, in the case of the iMareCameraRecorder, even though it records the accelerometer at 400Hz and the gyroscope at 200Hz, the accelerometer had to be downsampled to 200Hz to match the frequency of the gyroscope. In addition, we use the \textit{rosbag} tools\footnote{\url{http://wiki.ros.org/rosbag}} for recording and playing back bag files.
 
     When the bag files are prepared, we play them with rosbag. When the bag file is being played, it appears to RCARS as if there was a live stream of data from a device, which finally allows us to run RCARS on our data.
     
     \subsection{Detection}
-    As shown in our workflow in \autoref{fig:workflow_pose}, the bag file publishes the raw images and the intrinsic camera calibration parameters to the integrated ROS image processing node\footnote{\url{http://wiki.ros.org/image_proc}} that undistorts them. The detector can then use these images to detect the AprilTags.
+    As shown in our workflow in \autoref{fig:workflow_pose} on page \pageref{fig:workflow_pose}, the bag file publishes the raw images and the intrinsic camera calibration parameters to the integrated ROS image processing node\footnote{\url{http://wiki.ros.org/image_proc}} that undistorts them. The detector can then use these images to detect the AprilTags, and then publish their relative poses to the camera, as well as their corner locations.
 
     \subsection{Estimation}
-    The estimator node subscribes to the tag detections from the detector and the IMU measurements from the bag file. However, before running the estimation, we have to configure the EKF parameters stored in the \texttt{EKFsettings.info}\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Configuration}} configuration file. Since configuring an EKF is not trivial and requires some experience, we left most of the parameters on the default values.
+    The estimator node subscribes to the tag corner detections from the detector and the IMU measurements from the source bag file. However, before running the estimation, we have to configure the EKF parameters stored in the \texttt{EKFsettings.info}\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Configuration}} configuration file. As discussed on page \pageref{subsec:KFparams}, configuring the EKF is not trivial, hence we left most of the parameters on default values.
     
     However, there are some parameters that cannot be left on default, because we are using a different device than the authors:
-    \begin{enumerate}
-        \item the extrinsic calibration between the IMU and the camera;
-        \item the squared pixel standard deviation of the tag corner detection results;
-        \item and the Mahalonobis threshold defining when a marker is considered an outlier.
-    \end{enumerate}
+    \begin{description}
+        \item [\texttt{Extrinsic calibration}] The extrinsic calibration between the IMU and the camera.
+        \item [\texttt{PixelStd}] The squared pixel standard deviation of the tag corner detection results.
+        \item [\texttt{MahalanobisTh}] The Mahalonobis threshold distance\footnote{\url{https://en.wikipedia.org/wiki/Mahalanobis_distance}} defining when the marker is considered an outlier.
+    \end{description}
 	
     Note that enough time should be devoted to determining the correct values for the device, because they are critical for the estimator to work correctly. Also, Neunert et al. \cite{15Neunert} use is the specialized Visual-Inertial (VI-) Sensor\footnote{\url{http://wiki.ros.org/vi_sensor/}} that provides fully time-synchronized and factory calibrated IMU- and stereo-camera data stream. Therefore, we do not expect from a smartphone to perform with such accuracy and robustness in our experiments as the authors achieved.
     
-    The estimator then publishes the final pose estimate of the device and all tags. Using RViz, we observe the estimation process and adjust the EKF parameters if needed. RCARS uses several coordinate frames described in \autoref{sec:coords}.
+    The estimator then publishes the final pose estimate of the device and all tags. We observe the estimation process using RViz (see \autoref{fig:rviz}), and tune the EKF parameters if needed. For a an overview of the coordinate frames used in RCARS, see \autoref{sec:coords}.
     
-    We then record the topics from the estimator that we are interested in again into a bag file. Consequently, this bag is converted into the CSV\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format by the script \texttt{bag\_to\_csv.py}. The CSV is then analyzed in MATLAB in the evaluation section, see \ref{sec:evaluation}. \todo{Really evaluation? Not simulation?}
+    Finally, we record the topics from the estimator that we are interested in (e.g., device pose, tag pose) again into a bag file. Consequently, the bag file is converted into the CSV\footnote{\url{https://en.wikipedia.org/wiki/Comma-separated_values}} format using the script \texttt{bag\_to\_csv.py}. The CSV file is then analyzed in MATLAB in the evaluation section, see \autoref{fig:workflow_sim}.
 
 \section{Simulating underwater environments}
 \label{sec:simulating}
 This thesis is concerned with decreased visibility conditions of underwater environments. In marine terms, visibility is an estimation of water clarity and is defined as the distance a diver can see horizontally \cite{visibility}. There are several factors affecting the visibility, for example, light attenuation and scattering between the object and the viewer result in lower contrast and blur in the image. The visibility can also be severely decreased by suspended particles of sand, mud, clay, or other bottom sediments.
 
-However, these conditions are difficult to imitate in the laboratory. Thus, we record the datasets in full visibility and then modify the detection results by adding several steps into the pose estimation workflow (\autoref{fig:workflow_pose}). 
+However, these conditions are difficult to imitate in the laboratory. Thus, we record the datasets in full visibility conditions, and then we modify the detection results by adding several steps into the pose estimation workflow (\autoref{fig:workflow_pose}). 
 
-This section describes the two underwater conditions simulated in this thesis: short-range visibility (\ref{sec:threshold}) and water turbidity (\ref{sec:noise}).
+This section describes the two underwater conditions simulated in this thesis: short-range visibility and water turbidity.
 
     \subsection{Distance threshold}
     \label{sec:threshold}
-    This simulation assumes that after a certain distance threshold, no markers are visible in the image. The simulation and evaluation workflow is depicted in \autoref{fig:workflow_sim}, and is implemented as follows.
-    
-    \begin{figure}
-        \includegraphics[width=\textwidth]{img/Simulation/workflow_sim.eps}
-        \caption{Distance threshold simulation workflow. First, the detection is performed in full visibility conditions. Second, the markers are discarded according to a given threshold. Third, the leftover markers are sent to the estimator. Finally, MATLAB calculates the error per frame  for each threshold, which is input for the mean error per threshold plot.}
-        \label{fig:workflow_sim}
-    \end{figure}
+    This simulation assumes that after a certain distance threshold, no markers are visible in the image. The simulation and evaluation workflow is depicted in \autoref{fig:workflow_sim} on page \pageref{fig:workflow_sim}, and is implemented as follows.
     
     First, the detector detects all tags in the raw image, which corresponds to the full visibility conditions. The detection results are then saved in a bag file named \texttt{<dataset>\_tags.bag}.
     
-    Second, the Python script \texttt{threshold.py} takes this bag file and a threshold as an argument and discards the markers further away from the camera than the threshold. This is achieved by comparing the threshold to the z-coordinate of the marker pose relative to the camera, which output by the estimator node. 
+    Second, the Python script \texttt{threshold.py} takes this bag file and a threshold as an argument and discards the markers further away from the camera than the threshold. This is achieved by comparing the threshold to the z-coordinate of the marker pose relative to the camera, which is output by the estimator node. 
     
     We also consider a linear falloff distance of one meter for discarding the markers, shown in \autoref{fig:falloff}.
     
-    \begin{figure}
+    Finally, the \texttt{threshold.py} script outputs a bag file named \\ \texttt{<dataset>\_<threshold>\_tags.bag}, which is then sent to the estimator that outputs the pose estimates in low visibility into a bag file named \texttt{<dataset>\_<threshold>\_est.bag}.
+    
+    \begin{figure}[h]
+        \centering
         \includegraphics[width=\textwidth]{img/Simulation/falloff.eps}
         \caption{We consider a falloff distance of 1 m. Hence, for a threshold of 3 m, the tags closer to the camera than 2 m remain in the bag, tags at 2.5 meters have a 50~\% chance of being discarded, and all tags further away then 3 m are discarded.}
         \label{fig:falloff}
     \end{figure}
     
-    Finally, the \texttt{threshold.py} script outputs a bag file named \\ \texttt{<dataset>\_<threshold>\_tags.bag}, which is then sent to the estimator that outputs the pose estimates in low visibility into a bag file named \texttt{<dataset>\_<threshold>\_est.bag}.
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{img/Simulation/workflow_sim.eps}
+        \caption{Distance threshold simulation workflow. First, the detection is performed in full visibility conditions. Second, the markers are discarded according to a given threshold. Third, the leftover markers are sent to the estimator. Finally, MATLAB calculates the error per sample  for each threshold, which is input for the mean error per threshold plot.}
+        \label{fig:workflow_sim}
+    \end{figure}
     
-    \subsection{Adding noise}
-    \label{sec:noise}
+    \subsection{Adding noise} \label{sec:noise}
     The second simulation assumes that there are floating particles in the water that bring noise into the image. We simulate this by corrupting the tag corner detection results by a random noise of a given variance. We make use of the fact that the EKF in RCARS uses the tag corner detections as measurement updates rather than directly the tag pose obtained by OpenCV. As a result of this holistic approach, we can improve the tracking by changing the \texttt{PixelStd} parameter in the \texttt{EKFsettings}.info file. The \texttt{PixelStd} parameter represents the pixel variance (the squared pixel standard deviation) of the tag corner detections.
     
     In full visibility, we use a pixel variance of 25 pixels. After adding noise to the corners, we raise this variance accordingly. For example, for an added noise with the variance of 100 pixels, we set the \texttt{PixelStd} parameter to 125.
@@ -502,140 +537,104 @@ This section describes the two underwater conditions simulated in this thesis: s
 
 \section{Evaluation method}
 \label{sec:evaluation}
-We evaluate the accuracy of the RCARS pose estimation by computing the Euclidean distance between the 3D position of the smartphone estimated by RCARS and the position measured by the motion capture (mocap). 
+We evaluate the RCARS pose estimation accuracy of by computing the Euclidean distance between the 3D position of the smartphone estimated by RCARS and the position measured by the motion capture system (mocap). 
 This section describes the evaluation method used in this thesis.
  
-For data analysis and plotting, we use MATLAB. Thus, we wrote several MATLAB scripts to load the CSV files containing the pose estimates.
+For data analysis and plotting, we use MATLAB\footnote{\url{https://www.mathworks.com/products/matlab.html}}. Thus, we wrote several MATLAB scripts to load the CSV files containing the pose estimates.
  
-The filter and the mocap are two independent systems that do not communicate with each other. To be able to compare them, their coordinate frames have to be aligned and their samples synchronized. When this is not done correctly, it leads to bias in error calculations.
+RCARS and the mocap are two independent systems that do not communicate with each other. To be able to compare them, their coordinate frames have to be aligned and their samples synchronized. When this is not done correctly, the evaluation results can be biased.
 
-
-    \subsection{Coordinate frames}
+    \subsection{Coordinate frames alignment} \label{subsec:coord_align}
     \label{sec:coords}
-    For alignment, the goal is to find a common coordinate frame for RCARS and the mocap. There are several coordinate frames used in these systems:
-    
-    \missingfigure[figwidth=\textwidth]{Coordinate frames}
-    \begin{itemize}
-        \item Mocap
-        \begin{itemize}
-            \item world\_mocap: The laboratory.
-            \item tag\_mocap: The tag rigid body, will serve as a reference frame.
-            \item phone\_mocap: The phone rig.
-        \end{itemize}
-        \item RCARS
-        \begin{itemize}
-            \item world\_RCARS: This frame is initialized when RCARS starts receiving messages.
-            \item tag\_RCARS: The frame of the reference tag.
-            \item camera\_RCARS: This frame is used by the detector, which determines the immediate pose of the tag; as well as the estimator, which instead of using the pose from the detector it uses the corner locations in pixel coordinates that are transformed into this frame and the filter further estimates their pose here.
-            \item IMU\_RCARS: The IMU measures in this frame.
-        \end{itemize}
-    \end{itemize}
-    
-    In our method, we select a reference tag as the common coordinate frame. In the case of the mocap, we create a rigid body for this tag and transform the smartphone pose measurements into the local coordinate frame of the marker as follows:
-    \begin{equation}
-        \label{eq:mocapTransform}
-        phone_{mocap}^W * (tag_{mocap}^W)^{-1} = phone_{mocap}^{T} 
-    \end{equation}
-    \todo{Indexes}
+    When aligning the coordinate frames, the task is to find a common coordinate frame for RCARS and the mocap. Both systems contain their own coordinate frames for the workspace, the tracking device, and the tag. In our method, we select a reference tag as the common coordinate frame, and transform the phone pose from the workspace frame to the local coordinate frame of the tag. Hence, the phone pose is in the local coordinate frame of the referene tag both for RCARS and the mocap.
 
-    This process is similar for RCARS, where we start recording the dataset with the camera pointing at the reference tag and then use it to transform all pose estimates from the RCARS global frame into the local frame of the tag:
-
-    \begin{equation}
-        phone_{RCARS}^W * (tag_{RCARS}^W)^{-1} = phone_{RCARS}^{T}
-    \end{equation}
-
-    For also aligning the orientation, the marker has to be placed in the laboratory in a way that its mocap rigid body axes are the same as the RCARS tag axes to ensure pitch, yaw, and roll consistency. Provided proper marker placement, the orientation can be aligned by including the rotation matrix of the tag in the transformation matrix in \autoref{eq:mocapTransform}.
-
-\section{Time synchronization}
+    \subsection{Time synchronization}
     \label{sec:time_sync}
-    After the poses from RCARS and mocap are aligned into a common coordinate frame, they have to be synchronized based on time. 
- 
-    It is assumed that the mocap dataset is always longer than the phone recording because, in our experiments, the recording on the mocap controller computer is started by the same person as the smartphone recording. Therefore, there is always a few second delay while the person moves to the initial position and starts recording on the smartphone. This is shown in Fig.X, where the recording on the smartphone was started 11 seconds after the mocap.
+    After the poses from RCARS and mocap are aligned into a common coordinate frame, they have to be synchronized based on time. It is assumed that the mocap dataset is always longer than the phone recording because the recording on the mocap controller computer is started by the same person as the smartphone recording. Therefore, there is always a delay for a few seconds while the person moves to the initial position and starts recording on the smartphone. This is shown in \autoref{fig:delay}, where the recording on the smartphone was started 20 seconds after the mocap.
     
-    \missingfigure[figwidth=\textwidth]{Delayed position}
+    \begin{figure}[b]
+        \centering
+        \includegraphics[width=.95\textwidth]{img/Simulation/Delay1.eps}
+        \caption{The y-axes the mocap (blue) and RCARS (red) in a dataset, where the smartphone started recording 20 s after the motion capture.}
+        \label{fig:delay}
+    \end{figure}
     
     Since there is no grouping element in the CSV files of mocap and RCARS, we compute the cross-correlation between the positions in a given axis to find the count of samples that the mocap is ahead of RCARS. The choice of the axis depends on the range of motion in the dataset. From our tests, we prefer to use the x- or y-axis, since they are usually better estimated than the z-axis representing the height.
 
-    Also, we found that the region for cross-correlation computing should not be the whole dataset but only the first few seconds. This is because we start the dataset recording with the camera pointing at the reference tag; therefore, even in the case when the filter is diverging, the error should be zero at the beginning and increase over time. Another case when taking only the beginning of the dataset is necessary is shown in Fig.X, where a gradually increasing delay in the dataset causes the cross-correlation to be maximum for the alignment of the second half of the dataset as a global optimum. By computing the cross-correlation only from the beginning of the dataset, we ensure that we find the initial alignment, not a global optimum.
+    Also, we found that the region for cross-correlation computing should not be the whole dataset but only the first few seconds. This is because we start the dataset recording with the camera pointing at the reference tag; therefore, even in the case when the filter is diverging, the error should be the smallest at the beginning and increase over time. Another case when it is necessary to take only the beginning of the dataset is when the RCARS estimates are delayed after the mocap measurements, as shown in \autoref{fig:delay}. If the cross-correlation determined the offset based on the whole dataset, the middle parts would be aligned and the beginning would be offset, which is against our assumption that the error is minimal at the beginning. By computing the cross-correlation only from the beginning of the dataset, we ensure that we find the initial alignment, not a global optimum.
 
-    \missingfigure[figwidth=10cm]{Increasing delay}
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=\textwidth]{img/Simulation/Bgn.eps}
+        \caption{The increasing delay between RCARS and mocap throughout the dataset. If the cross-correlation was computed on the whole dataset, it would be aligned based on the middle part. Thus, the cross-correlation takes into account only the first few seconds, depending on the dataset.}
+        \label{fig:inc_delay}
+    \end{figure}
 
-\section{Error computation}
+\subsection{Error computation}
 \label{sec:error}
-    When the positions are aligned and synchronized, the error can be finally obtained by computing the Euclidean distance between them as follows:
-    
-    \begin{equation}
-        error = \sqrt{(mocap.x - RCARS.x)^2 + (mocap.y - RCARS.y)^2 + (mocap.z - RCARS.z)^2}
-    \end{equation}
-
-    The result is demonstrated on an example dataset in Fig.X, where the estimated pose is diverging from the ground truth, causing an increasing error over time.
-    
-    \missingfigure[figwidth=10cm]{Error per frame}
-    
-    To evaluate the decreased visibility effects on the pose estimation, we run the estimator on many different thresholds and noise-corrupted detections, as shown in Fig.X. These estimates are then joined in one plot showing the mean error per sample for a given threshold or noise standard deviation.
-
-\chapter{Experiment}
-\section{Setup}
-Calibration and bias free comparison is essential for our experiment. This section describes the specific setup and conditions that our experiments were performed in.
-
-    \subsection{Laboratory}
-    The experiments took place at the Human-Computer Interaction laboratory\footnote{\url{http://hci.fi.muni.cz/}} at the Faculty of Informatics, Masaryk University in Brno. As shown in Fig. \ref{fig:hcil}, the markers were randomly placed across the room, covering an area of 5.4 x 6.6 meters; with the markers attached both on horizontal and vertical surfaces.
+    When the positions are aligned and synchronized, the error can be finally obtained by computing the Euclidean distance between the positions of mocap and RCARS at each time frame. The resulting plot is shown in \autoref{fig:error_frame}.
     
     \begin{figure}
+        \centering
+        \includegraphics{img/Simulation/error.eps}
+        \caption{The error per frame plot for the dataset \textit{2CCW}. The estimated pose is diverging from the ground truth, causing an increasing error over time.}
+        \label{fig:error_frame}
+    \end{figure}
+    
+    To evaluate the decreased visibility effects on the pose estimation, we run the estimator on many different thresholds and noise-corrupted detections, as shown in our simulation workflow in \autoref{fig:workflow_sim} on page \pageref{fig:workflow_sim}. These estimates are then joined in one plot showing the mean error per sample for a given threshold or noise standard deviation.
+
+\chapter{Experiment}
+Since it would be difficult to evaluate the effect of poor visibility conditions on the pose tracking directly underwater, we record the datasets in the controlled environment of a laboratory equipped with a motion capture system, serving as ground truth. We simulate the underwater conditions by post-processing the detection results, and produce estimates for each simulation. Finally, we calculate the error by comparing the obtained pose to ground truth and draw conclusions about the effect of our simulations on the pose tracking accuracy.
+
+\section{Setup}
+    \subsection{Laboratory}
+    The experiments took place at the Human-Computer Interaction laboratory\footnote{\url{http://hci.fi.muni.cz/}} at the Faculty of Informatics, Masaryk University in Brno. The laboratory is equipped with a high-quality motion capture system from OptiTrack\footnote{\url{https://optitrack.com/products/prime-13w/}} that uses 16 ultra-wide cameras (Prime13W), offering high-precision and low-latency tracking with up to 240 FPS capture rate. Tracking of an object is realized by spherical retroreflective markers detected by the cameras. This system is controlled by the Motive software, which provides calibration, creating rigid bodies, and recording.
+    
+    \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/Setup/HCIL.JPG}
         \caption{HCIL}
         \label{fig:hcil}
     \end{figure}
     
-    The laboratory is equipped with a high-quality motion capture system from Optitrack\footnote{\url{https://optitrack.com/products/prime-13w/}} that uses 16 ultra-wide cameras (Prime13W), offering high-precision and low-latency tracking with up to 240 FPS capture rate. Tracking of an object is realized by spherical retroreflective markers detected by the cameras. This system is controlled by Motive software, which provides calibration, creating rigid bodies, and recording.
-    
-    Before recording the datasets, a new calibration was performed following the documentation\footnote{\url{https://v20.wiki.optitrack.com/index.php?title=Calibration}}, with exceptional results with the mean 3D error of 0.673 mm. In our experiments, the average error per marker was 0.1mm for the static marker, and 0.4mm for the moving smartphone.
+    Before recording the datasets, a new calibration was performed following the OptiTrack documentation\footnote{\url{https://v20.wiki.optitrack.com/index.php?title=Calibration}}, with exceptional results of the mean 3D error 0.673~mm. In our experiments, the average error per marker was 0.1~mm for rigid body of the static marker, and 0.4~mm for rigid body of the moving smartphone.
 
     \subsection{Markers}
-    To find the pixel standard deviation of the marker detections in the conditions of our experiment, we built a static scene with the phone recording two markers at the distances of 1 m and 3 m for one minute. We calculated the average standard deviation of the detected corners, resulting in 0.40811 pixels for the marker at 1 m and 0.44091 pixels for the marker at 3 m. 
-    
-    The default PxStd parameter value for RCARS is 25 pixels. However, since we are recording in a higher resolution, we rather do not decrease this value and leave it on default.
-    
-    \begin{itemize}
-        \item apriltags
-        \item in EKFsettings.info, number of dynamic tags is set to 30. I used 27 AprilTags downloaded from here: \url{https://robot2016.mit.edu/sites/default/files/documents/project_apriltag36h11.pdf}
-        \item placed on flat surfaces or attached with pritt gum, or just loosely on a chair, being careful not to bend them
-    \end{itemize}
+    We used 27 pieces of AprilTag\footnote{\url{https://robot2016.mit.edu/sites/default/files/documents/project_apriltag36h11.pdf}} markers printed on A4 papers. As shown in \autoref{fig:hcil}, we placed the markers randomly throughout an area of 5.4 x 6.6 m in the laboratory. We attached them on horizontal, as well as vertical surfaces; while being careful not to bend their surface, which would affect the detections.
+
+    To find the correct value for the \texttt{PxStd} parameter for the RCARS EKF in the conditions of our experiment, we built a static scene with the phone recording two markers at the distances of 1 m and 3 m for one minute. We then calculated the average standard deviation of the detected corners, resulting in 0.40811 pixels for the marker at 1 m and 0.44091 pixels for the marker at 3~m. However, the default \texttt{PxStd} parameter value is 25 pixels; but since we are recording in a higher resolution, we did not decrease this value and leave it on default.
     
     \subsection{Phone}
-    The smartphone we used is the OnePlus 6 running on Android 9 and equipped with a 16 MP, f/1.7, wide-angle camera (25mm (wide), 1/2.6") and the BMI160\footnote{\url{https://www.bosch-sensortec.com/bst/products/all_products/bmi160}} IMU manufactured by Bosch Sensortec\footnote{\url{https://www.bosch-sensortec.com/}}.
+    The smartphone we used is the OnePlus 6 running on Android 9, equipped with a 16 MP f/1.7 wide-angle camera (25mm (wide), 1/2.6") and the BMI160\footnote{\url{https://www.bosch-sensortec.com/bst/products/all_products/bmi160}} IMU manufactured by Bosch Sensortec\footnote{\url{https://www.bosch-sensortec.com/}}.
     
     \subsection{Intrinsic calibration}
-    We performed the camera calibration in the laboratory to assert equal lighting conditions than in the datasets recordings. We used the iMareCameraCalibration application, described in \autoref{sec:input_data}, with a chessboard pattern of size 9 x 6 (the count of inner corners of the chessboard) and printed it on an A4 paper. The dimensions of one chessboard square were 25 x 25mm. The pattern, as well as the calibration images and coefficients, are provided in the attachments. 
-    
-    The calibration images were following the Matlab camera calibration workflow\footnote{\url{https://www.mathworks.com/help/vision/ug/single-camera-calibrator-app.html}}. As it says, to achieve a good camera calibration, between 10 and 20 images of the checkerboard pattern should be used. In addition, the images should be captured at a distance roughly equal to the distance from the camera to the objects of interest, without using autofocus or changing the zoom settings between images. Furthermore, since lens distortion increases radially from the center of the image and sometimes is not uniform across the image frame, the images should be taken at different orientations relative to the camera and the pattern must appear close to the edges of the captured images.
+    We performed the camera calibration in the laboratory to assert equal lighting conditions than in the datasets recordings. We used the iMareCameraCalibration application, described in \autoref{subsec:input_data}, with a chessboard pattern of size 9 x 6 (the count of inner corners of the chessboard), and printed it on an A4 paper. The dimensions of one chessboard square were 25 x 25mm. The pattern, as well as the calibration images and coefficients, are provided in the attachments. 
 
     \subsection{Extrinsic calibration}
     Due to the extrinsic calibration, we have to know where the IMU is located in the device. We tried to figure out this location from the OnePlus 6 motherboard photos. Although it indicated possible locations, the exact one was not clear. 
-    Therefore, we used the online extrinsic calibration provided by RCARS. The calibration process, described in chapter X, returned the relative transformation estimate depicted in Fig. \ref{fig:extrinsic}. 
-    
-    However, note that this estimate is still an approximation and may not reflect the true IMU location, thus the results may be affected by this error.
+    Therefore, we used the RCARS online extrinsic calibration. The obtained values are provided in the \texttt{EKFsettings.info} file in the attachments of this thesis. However, note that this estimate is still an approximation and may not reflect the true IMU location, thus the results may be affected by this error.
     
     \subsection{Phone rig}
-    To track the phone pose with the motion capture system, we mount the retroreflective markers tracked by the cameras on the phone. Thus, we built a custom rig from skewers and rubber bands, shown in \autoref{fig:rig}. Following the marker placement recommendations from the documentation\footnote{\url{https://v20.wiki.optitrack.com/}}, we attach five spherical markers on the skewer edges asymmetrically, to avoid congruency. 
-    When a rigid body of this rig is created in Motive, its pivot point is at its geometric center. Thus, to put the pivot point to camera location, we measure the distance of the camera lens from the geometric center and translate the pivot point in Motive accordingly.
+    To track the phone pose with the motion capture system, we mounted the retroreflective markers tracked by the mocap cameras on the phone. Thus, we built a custom rig from skewers and rubber bands, shown in \autoref{fig:rig}. Following the marker placement recommendations from the documentation\footnote{\url{https://v20.wiki.optitrack.com/}}, we attached five spherical markers on the skewer edges asymmetrically to avoid congruency. This phone rig has proved to be robust enough against deflection, and, with the proper holding of the device, the rig is trackable by the motion capture system throughout the whole dataset with minimal detection loss.
+    
+    When a rigid body of this rig is created in Motive, its pivot point is at its geometric center. Thus, to translate the pivot point to the camera location, we measure the distance from the camera lens to the geometric center of the phone, and translate the pivot point in Motive accordingly.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/Setup/Rig.png}
-        \caption{Phone rig}
+        \caption{The dimensions of the phone rig mounted on the OnePlus 6. The mocap retroreflective markers are placed asymmetrically to avoid ambiguity. To track the pose of the camera instead of the geometrical center of the rig, the rigid body pivot point is translated by 4.75~cm in Motive.}
         \label{fig:rig}
     \end{figure}
 
-    This phone rig proved to be robust enough against deflection and, with the proper holding of the device, the rig is trackable by the motion capture system throughout the whole dataset with minimal detection losses.
-    
     \subsection{Motion capture to filter estimation}
-    As proposed in chapterX, the poses have to be aligned according to a common origin to be able to compare the poses measured by the motion capture and the filter. In this case, the origin is set to be the AprilTag with id 1.
+    As proposed in \autoref{subsec:coord_align} on page \pageref{subsec:coord_align}, the poses have to be aligned according to a common origin to be able to compare the poses measured by the motion capture and the filter. In this case, the origin is set to be the AprilTag with id 1.
     
-    For position, we tackle the alignment as follows. The tag frame origin of the detected tag in OpenCV is in its geometrical center. Also, when a rigid body is created in Motive, its pivot point is placed at its geometric center. Thus, for tracking of the tag with motion capture, the reflective markers are placed onto the four corners of the tag, and a rigid body is created consequently. This way, we ensure that the origin of the marker pose is the same for both RCARS and motion capture.
+    For position, we align RCARS with mocap as follows. The tag frame origin of the detected tag in OpenCV is in its geometrical center. Also, when a rigid body is created in Motive, its pivot point is placed at its geometric center. Thus, for tracking of the tag with the mocap, the retroreflective markers are placed onto the four corners of the tag, and a rigid body is created consequently. This way, we ensure that the origin of the marker pose is the same for both RCARS and motion capture.
     
     To be able also to compare the orientation of the mocap and the filter, we take the orientation in the filter as a reference. When OpenCV detects the tag, the tag is assigned orientation axes as shown in Fig.X. The axes of the camera are aligned with the tag when the phone is laying flat on the tag with the camera on top. Thus, initializing the axes for the tag and the phone in the same way, allows us to also compare the orientation of the mocap measurements and the filter estimates.T
     
     \begin{figure}
+        \centering
         \includegraphics[width=8cm]{example-image}
         \caption{Axes}
         \label{fig:axes}
@@ -671,18 +670,21 @@ Dataset \textit{3RAND} contains random trajectory movement with several fast mot
 The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and for \textit{3RAND} is 32~cm. The way the error occurs in the datasets differs; for example, while the error in \textit{2CCW} accumulates throughout the whole dataset, the error in \textit{3RAND} jumps at a certain point due to a fast movement, but then starts converging to its true position, which is again disrupted by the subsequent outliers.
 
 \begin{figure}
+    \centering
     \includegraphics[width=\textwidth]{img/Dataset06.png}
     \caption{Dataset \textit{1CW}. Top-left: 3D visualization of the trajectory. Top-right: Difference between estimated and ground truth position per frame. Bottom: Estimated and ground truth position per axis.}
     \label{fig:dataset06}
 \end{figure}
 
 \begin{figure}
+    \centering
     \includegraphics[width=\textwidth]{img/Dataset07.png}
     \caption{Dataset \textit{2CCW}}
     \label{fig:dataset07}
 \end{figure}
 
 \begin{figure}
+    \centering
     \includegraphics[width=\textwidth]{img/Dataset08.png}
     \caption{Dataset \textit{3RAND}}
     \label{fig:dataset08}
@@ -698,6 +700,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     By decreasing the distance threshold, the count of detected images also decreases. When there is no image detected, the estimations are based only on the inertial measurements, and therefore the filter starts drifting away. This is shown in \autoref{fig:07_drift} for the dataset \textit{2CCW} --- even though the error at 1.8~m is lower than at 2.4~m by almost 5~cm, there is a significant difference in the estimation process, and thus also in the AR experience. While at 2.4~m the error accumulates gradually, at 1.8~m the filter starts diverging several times and jumps back near its true position when a marker is detected.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/07_drift.png}
         \caption{Dataset \textit{2CCW} estimations at 2.3 m on the left, and 1.8 m on the right. Note that even though the mean error is lower at 1.8 m, the pose is drifting away in the highlighted areas; while the estimation at 2.3 m contains no drift.}
         \label{fig:07_drift}
@@ -707,6 +710,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     \autoref{fig:mean_error__per_threshold} shows the mean error per threshold for each dataset. Although we expected that with decreasing threshold, the error would gradually rise, the results do not fully follow this inverse proportionality.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/thresholds.png}
         \caption{TODO: Horizontally. Mean error per threshold plots for each dataset.}
         \label{fig:mean_error__per_threshold}
@@ -720,6 +724,7 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
     With the threshold below 2~m, the estimation in all datasets often diverges by tens of meters. \autoref{fig:low_thresholds} contains plots showing the errors per frame in low thresholds for all datasets.
     
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/low_thresholds.png}
         \caption{Errors per frame in low thresholds}
         \label{fig:low_thresholds}
@@ -749,12 +754,13 @@ The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and f
 	
 	For example, we assume that the peak in \textit{3RAND} at 3.6~m occurred as follows. While for higher thresholds there were more distant markers that contributed to the tracking well, at 3.6~m they are not detected anymore, but there are still distant markers that may bring false information due to their placement or the device movement, which harms the estimation. By lowering the threshold to 3.4~m, these tags are discarded, thus, not bringing false information into the estimation. 
 	
-	We also assume that this interference by distant markers is occurring periodically in the rest of the dataset 3RAND, as well as in 1CW. We suppose that it could be controlled by adjusting the EKF parameters \texttt{PixelStd} and \texttt{MahalanobisTh}. The pixel standard deviation parameter sets the impact of the tag detection on the estimation. Although increasing it would cause fewer outliers, it would be for the price of a lower accuracy. On the other hand, lowering the Mahalanobis threshold\footnote{\url{https://en.wikipedia.org/wiki/Mahalanobis_distance}} would result in more frequent outliers; thus, the tag poses would be more frequently reset, and the system would have a higher chance of recovery. 
+	We also assume that this interference by distant markers is occurring periodically in the rest of the dataset 3RAND, as well as in 1CW. We suppose that it could be controlled by adjusting the EKF parameters \texttt{PixelStd} and \texttt{MahalanobisTh}. The pixel standard deviation parameter sets the impact of the tag detection on the estimation. Although increasing it would cause fewer outliers, it would be for the price of a lower accuracy. On the other hand, lowering the Mahalanobis threshold would result in more frequent outliers; thus, the tag poses would be more frequently reset, and the system would have a higher chance of recovery. 
     
     \subsection{Added noise}
     We added zero-mean Gaussian noise to the tag corner detections with the standard deviations of 2, 5, 8, 10, 15, and 20 pixels, and respectively raised the \texttt{PxStd} parameter, representing the squared pixel standard deviation in the EKF estimation. Since the value of this parameter in full visibility is 25 pixels, after corrupting the detection results with the noise of standard deviation $\sigma$, the resulting value for the PxStd is $25 + \sigma^2$. \autoref{fig:noise} shows the output of this simulation in a mean error per noise standard deviation plot for every dataset.
 
     \begin{figure}
+        \centering
         \includegraphics[width=\textwidth]{img/noise.png}
         \caption{TODO: Horizontal pltos. Errors per noise standard deviation}
         \label{fig:noise}
@@ -775,7 +781,7 @@ In this thesis, we analyzed the underwater challenges of AR systems that are bas
 
 We simulated the underwater conditions by discarding markers according to their distance from the camera and by corrupting the detected corners by adding artificial noise to simulate water turbidity. 
 
-The results on our datasets show that the pose estimation accuracy of the system in 2.2m visibility is on the same level as in 3, 4, or even 5m visibility. Thus, we conclude that the system does not need a high amount of markers to produce accurate pose estimates. Instead, the number of detected markers can be even decreased to reduce computational complexity and, thus, improve the estimation speed.
+The results on our datasets show that the pose estimation accuracy of the system in 2.2~m visibility is on the same level as in 3, 4, or even 5~m visibility. Thus, we conclude that the system does not need a high amount of markers to produce accurate pose estimates. Instead, the number of detected markers can be even decreased to reduce computational complexity and, thus, improve the estimation speed.
 
 From our experiments, we learned that for EKF-based systems, proper configuration is critical for satisfactory pose estimation. The experiment of adding noise to the detection showed that when the correct pixel standard deviation parameter is provided, the system can produce precise pose estimates even in a very turbid environment. However, these parameters are device dependent; finding them is not trivial and requires some experience. 
 
