@@ -11,7 +11,7 @@
            %% at your faculty.
   table,   %% This option causes the coloring of tables. Replace
            %% with `notable` to restore plain LaTeX tables.
-  lof,     %% This option prints the List of Figures. Replace with
+  nolof,     %% This option prints the List of Figures. Replace with
            %% `nolof` to hide the List of Figures.
   nolot,     %% This option prints the List of Tables. Replace with
            %% `nolot` to hide the List of Tables.
@@ -324,7 +324,7 @@ Here are presented the equations used in the two stages of the Kalman filter.
         \begin{equation} \label{eq:KFkalmanGain}
             K_k = P_k^- H^T (H P_k^- H^T + R_k)^{-1}
         \end{equation}
-        \begin{equation} \label{eq:weighted_avg}
+        \begin{equation} \label{eq:KFweighted_avg}
             \hat{x}_k = \hat{x}_k^- + K_k (z_k - H \hat{x}_k^-)
         \end{equation}
         \begin{equation} \label{eq:KFprocessNoisePost}
@@ -336,12 +336,12 @@ Here are presented the equations used in the two stages of the Kalman filter.
         \end{itemize}
         The update stage incorporates new measurements into the \textit{a~priori} estimates to obtain an improved \textit{a posteriori} estimate.
         
-        Notice that the \textit{a~posteriori} state estimate $\hat{x}_k$ in \ref{eq:weighted_avg} is obtained as a \textbf{weighted average} between the \textit{a~priori} state estimate $\hat{x}_k^-$ and the measurement residual. The purpose of the weights is that they decide based, which of either the estimate or measurement to ``trust more'' \cite{KalmanWiki}. The Kalman gain is computed based on their uncertainties, so values with better (i.e., smaller) estimated uncertainty are trusted more. Hence, if the prediction is accurate, the Kalman gain cancels out the effect of new measurements, and vice versa.
+        Notice that the \textit{a~posteriori} state estimate $\hat{x}_k$ in \ref{eq:KFweighted_avg} is obtained as a \textbf{weighted average} between the \textit{a~priori} state estimate $\hat{x}_k^-$ and the measurement residual. The purpose of the weights is that they decide based, which of either the estimate or measurement to ``trust more'' \cite{KalmanWiki}. The Kalman gain is computed based on their uncertainties, so values with better (i.e., smaller) estimated uncertainty are trusted more. Hence, if the prediction is accurate, the Kalman gain cancels out the effect of new measurements, and vice versa.
 \end{enumerate}
 
 This process is repeated at every time step, with the new estimate and its covariance informing the prediction used in the following iteration. This means that the Kalman filter works recursively and requires only the last ``best guess'', rather than the entire history, of a system's state to calculate a new state. \todo{Just wiki, rewrite}
 
-\subsection{Kalman filter parameters} \label{subsec:KFparams}
+\subsection{Parameters} \label{subsec:KFparams}
 Since the filtering process starts with an initial state defined by the user, the accuracy of this state can influence the performance of the Kalman filter. Determining the values in the measurement noise covariance matrix $R$ is usually possible and practical because we use the measurement device and are able to get the measurement noise by a calibration routine \cite{95Intro}. On the other hand, finding the process noise covarinace matrix $Q$ is usually more difficult because we are often estimating a process that is not directly observable. Thus, it is often tuned by trial and error; however, as Welch and Bishop state \cite{95Intro}: ``In either case, whether or not we have a rational basis for choosing the parameters, often times superior filter performance (statistically speaking) can be obtained by tuning the filter parameters $Q$ and $R$.''
 
 \section{Non-linear systems}
@@ -381,13 +381,13 @@ The predict and update equations are as follows
         \end{equation}
         
     \item Update:
-        \begin{equation} \label{eq:KFkalmanGain}
+        \begin{equation} \label{eq:EKFkalmanGain}
             K_k = P_k^- H_k^T (H_k P_k^- H_k^T + R_k)^{-1}
         \end{equation}
-        \begin{equation} \label{eq:weighted_avg}
+        \begin{equation} \label{eq:EKFweighted_avg}
             \hat{x}_k = \hat{x}_k^- + K_k (z_k - H_k \hat{x}_k^-)
         \end{equation}
-        \begin{equation} \label{eq:KFprocessNoisePost}
+        \begin{equation} \label{eq:EKFprocessNoisePost}
             P_k = (I - K_k H_k) P_k^-.
         \end{equation}
 \end{enumerate}
@@ -523,7 +523,7 @@ This section describes the two underwater conditions simulated in this thesis: s
     
     \begin{figure}
         \centering
-        \includegraphics[width=\textwidth]{img/Simulation/workflow_sim.eps}
+        \includegraphics[width=.9\textwidth]{img/Simulation/workflow_sim.eps}
         \caption{Distance threshold simulation workflow. First, the detection is performed in full visibility conditions. Second, the markers are discarded according to a given threshold. Third, the leftover markers are sent to the estimator. Finally, MATLAB calculates the error per sample  for each threshold, which is input for the mean error per threshold plot.}
         \label{fig:workflow_sim}
     \end{figure}
@@ -629,67 +629,72 @@ Since it would be difficult to evaluate the effect of poor visibility conditions
     \subsection{Motion capture to filter estimation}
     As proposed in \autoref{subsec:coord_align} on page \pageref{subsec:coord_align}, the poses have to be aligned according to a common origin to be able to compare the poses measured by the motion capture and the filter. In this case, the origin is set to be the AprilTag with id 1.
     
-    For position, we align RCARS with mocap as follows. The tag frame origin of the detected tag in OpenCV is in its geometrical center. Also, when a rigid body is created in Motive, its pivot point is placed at its geometric center. Thus, for tracking of the tag with the mocap, the retroreflective markers are placed onto the four corners of the tag, and a rigid body is created consequently. This way, we ensure that the origin of the marker pose is the same for both RCARS and motion capture.
-    
-    To be able also to compare the orientation of the mocap and the filter, we take the orientation in the filter as a reference. When OpenCV detects the tag, the tag is assigned orientation axes as shown in Fig.X. The axes of the camera are aligned with the tag when the phone is laying flat on the tag with the camera on top. Thus, initializing the axes for the tag and the phone in the same way, allows us to also compare the orientation of the mocap measurements and the filter estimates.T
+    The origin of the tag coordinate frame in OpenCV is in its geometrical center. Similarly, when a rigid body is created in Motive, its pivot point is in its geometric center. Thus, the tracking of the tag by the mocap is achieved by placing the retroreflective markers onto the four tag corners (see \autoref{fig:tagMocap}), and consequently creating a new rigid body in Motive. Hence, we ensure that the origin of the marker pose is the same for both RCARS and the motion capture.
     
     \begin{figure}
         \centering
-        \includegraphics[width=8cm]{example-image}
-        \caption{Axes}
-        \label{fig:axes}
+        \includegraphics[width=\textwidth]{img/Setup/tagMocap.JPG}
+        \caption{The mocap retroreflective markers are placed onto the corners of the reference tag so that the pivot point of the new rigid body is in the geometrical center of the tag. Note that the markers cannot be placed directly onto the edges of the black square, because it would disable the OpenCV detection. Neither could the markers be placed onto the edges of the A4 paper, because the black square was offset by 1.1 cm to the top of the paper, so the pivot would not be in the center of the black square.}
+        \label{fig:tagMocap}
     \end{figure}
-
-    Since a new rigid body in motive has its axes aligned with the global coordinate axis, we place the tag aligned with the global frame. Then we lay the phone on the tag so that their geometrical centers overlap, as shown in FigX. Now the new rigid bodies for the tag and the phone can be created.
     
     \subsection{Recording}
-    For recording the datasets on the smartphone, we used iMareCameraRecorder, developed by Jan Čejka. A recording contains accelerometer, gyroscope, and magnetometer measurements, and camera images with their corresponding timestamps. Note that the camera frames and the IMU samples are not synchronized as in the case of the specialized VI-Sensor, which may negatively affect the performance of the estimator.
+    For recording the datasets on the smartphone, we used the iMareCameraRecorder developed by Jan Čejka. A recording contains the accelerometer, the gyroscope, and the magnetometer measurements, and the camera images with their corresponding timestamps. Note that the camera frames and the IMU samples are not synchronized as in the case of the specialized VI-Sensor, which may negatively affect the performance of the estimator.
     
-    The application contains a configuration file for setting the image resolution and sampling rates. In the experiments, we used 1280x720 resolution, 30 frames per second, and the IMU sampling frequencies of 200Hz for gyroscope and 400Hz for the accelerometer. However, due to RCARS input requirements, we downsample the accelerometer to match the gyroscope frequency.
-
+    The application contains a configuration file for setting the image resolution and sampling rates. In the experiments, we used the image resolution of 1280 x 720 pixels captured at 30 frames per second, and the IMU sampling rates of 200Hz for the gyroscope and 400Hz for the accelerometer. However, due to the RCARS input requirements, the \texttt{phone\_to\_bag.py} downsamples the accelerometer to match the sampling rate of the gyroscope.
 	
 	\subsection{Computer}
-	For running RCARS for estimation and MATLAB for evaluation, we primarily use the Lenovo Z580 laptop with Intel Core i7-3612QM 2.10GHz CPU and 8 GB of RAM.  In addition, for faster processing, we use a PC in the HCI laboratory with Intel(R) Core(TM) i7-8700 3.20GHz CPU and 32 GB of RAM.
+	To run RCARS for estimation and MATLAB for evaluation, we primarily use the Lenovo Z580 laptop with Intel Core i7-3612QM 2.10GHz CPU and 8 GB RAM. In addition, due to large file sizes and high computational cost of the detection and estimation, we use a workstation in our laboratory with Intel Core i7-8700 3.20GHz CPU and 32 GB RAM.
 	
 	\subsection{RCARS}
-	To run RCARS, we downloaded a Ubuntu 14.04 LTS virtual machine accessible on Nootrix.com\footnote{\url{https://nootrix.com/diy-tutos/ros-indigo-virtual-machine/}}, which has already preinstalled ROS Indigo and ROS tools. We tried to run it on the newest Ubuntu 18.04 first, however, we had dependency issues and failed to do so, similarly to other users discussing on Bitbucket\footnote{\url{https://bitbucket.org/adrlab/rcars/issues/4/rcars_detector_node-cant-run}}. 
-    On this virtual machine, we installed RCARS according to the instructions in the project's repository\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Home}}.
-	Since we are recording our datasets in HD resolution, working with a large amount of markers, and running RCARS on a virtual machine, we run the detector first, save the detection results, and then run the estimator separately. Moreover, we play all bag files in slower speed to lower the computational demands and ensure the best detection and estimation possible.
+	To run RCARS, we downloaded a Ubuntu 14.04 LTS virtual machine accessible on Nootrix.com\footnote{\url{https://nootrix.com/diy-tutos/ros-indigo-virtual-machine/}}, which has already preinstalled ROS Indigo and ROS tools. Then, we installed RCARS according to the instructions in the project's repository\footnote{\url{https://bitbucket.org/adrlab/rcars/wiki/Home}}.
+	
+    Since we are recording our datasets in HD resolution, working with a large number of markers, and running RCARS on a virtual machine, we run the detector first, save the detection results, and then run the estimator separately. Moreover, we play all bag files at slower speeds to lower the computational demands and ensure the best detection and estimation possible.
 
 \section{Datasets}
-As discussed in \autoref{sec:simulating}, the underwater conditions are simulated in two ways: by discarding the detected tags according to their distance from the camera, and by adding noise to the detected tag corners.
- 
-Each simulation is executed on three different datasets: \textit{1CW}, \textit{2CCW}, and \textit{3RAND}. Figures \ref{fig:dataset06}, \ref{fig:dataset07}, and \ref{fig:dataset08} show the 2D and 3D trajectories of both the filter estimation and the mocap measurements, as well as the error per frame for each dataset. All of these datasets are available in the attachments of this thesis, including the bag files with the recordings, the motion capture CSV files, and the estimated CSV files. Note that we were not always working with the full lengths of the datasets; therefore, the intervals are provided in the parameter file for each dataset.
+In order to execute the simulations described in \autoref{sec:simulating} on page \pageref{sec:simulating}, we recorded three different datasets: \textit{1CW}, \textit{2CCW}, and \textit{3RAND}. Figures \ref{fig:1CW}, \ref{fig:2CCW}, and \ref{fig:3RAND} show the 3D trajectories of RCARS and mocap, as well as the error per frame plots for each dataset. This section introduces the datasets by the full visibility pose estimates.
 
-\todo[inline]{Show all datasets? If yes, which plots?}
+In the dataset \textit{1CW}, we walk slowly one time around the room clockwise. We are avoiding rapid changes in movement or orientation because our goal is to test the filter robustness against a low number of markers, not against fast motions. However, shake still occurs due to walking. This dataset is 67~s long and has the lowest error out of the three: in average 13~cm/frame.
 
-In datasets \textit{1CW} and \textit{2CCW}, we walk slowly one time around the room clockwise and counter-clockwise, respectively, avoiding rapid changes in movement or orientation; nevertheless, shake still occurs in the image due to walking. 
+In the dataset \textit{2CCW}, we again walk slowly around the room, but this time in the counter-clockwise direction to test if the direction of the movement in our setup affects the pose estimation. However, a large outlier occurred in the half of the dataset, so we decided to remove it by trimming the dataset to the half of its original length. Hence, the dataset is 50~s long and the error accumulates over time to up to 49~cm at the end. The average error is 22~cm/frame.
 
-Dataset \textit{3RAND} contains random trajectory movement with several fast motions to test both the filter robustness and outlier recovery. This kind of incautions use occurs when the system is used by inexperienced users, not aware of the importance of minimizing motion blur and shake.
+Finally, the dataset \textit{3RAND} contains random trajectory movement with several fast motions that, this time, also test the filter robustness against rapid motions. This kind of incautions use occurs when the system is used by inexperienced users, not aware of the importance of minimizing motion blur and shake. This dataset is trimmed to 66~s and has the largest average error: 32~cm/frame. In contrast with \textit{2CCW}, the error does not accumulate over time; instead, it jumps at a certain point (due to a rapid movement) and then converges to its true value, but then again an outlier occurs, and the error rises.
 
-The error per frame for \textit{1CW} is 13~cm, for \textit{2CCW} is 22~cm, and for \textit{3RAND} is 32~cm. The way the error occurs in the datasets differs; for example, while the error in \textit{2CCW} accumulates throughout the whole dataset, the error in \textit{3RAND} jumps at a certain point due to a fast movement, but then starts converging to its true position, which is again disrupted by the subsequent outliers.
-
-\begin{figure}
+\begin{figure}[p]
     \centering
-    \includegraphics[width=\textwidth]{img/Dataset06.png}
-    \caption{Dataset \textit{1CW}. Top-left: 3D visualization of the trajectory. Top-right: Difference between estimated and ground truth position per frame. Bottom: Estimated and ground truth position per axis.}
-    \label{fig:dataset06}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/1CW/3D.eps}
+    \end{minipage}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/1CW/Err.eps}
+    \end{minipage}
+    \caption{1CW}
+    \label{fig:1CW}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[p]
     \centering
-    \includegraphics[width=\textwidth]{img/Dataset07.png}
-    \caption{Dataset \textit{2CCW}}
-    \label{fig:dataset07}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/2CCW/3D.eps}
+    \end{minipage}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/2CCW/Err.eps}
+    \end{minipage}
+    \caption{2CCW}
+    \label{fig:2CCW}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[p]
     \centering
-    \includegraphics[width=\textwidth]{img/Dataset08.png}
-    \caption{Dataset \textit{3RAND}}
-    \label{fig:dataset08}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/3RAND/3D.eps}
+    \end{minipage}
+    \begin{minipage}{.49\textwidth}
+        \includegraphics[width=\textwidth]{img/Experiments/3RAND/Err.eps}
+    \end{minipage}
+    \caption{3RAND}
+    \label{fig:3RAND}
 \end{figure}
-
 
 \section{Results}
     
@@ -781,7 +786,7 @@ In this thesis, we analyzed the underwater challenges of AR systems that are bas
 
 We simulated the underwater conditions by discarding markers according to their distance from the camera and by corrupting the detected corners by adding artificial noise to simulate water turbidity. 
 
-The results on our datasets show that the pose estimation accuracy of the system in 2.2~m visibility is on the same level as in 3, 4, or even 5~m visibility. Thus, we conclude that the system does not need a high amount of markers to produce accurate pose estimates. Instead, the number of detected markers can be even decreased to reduce computational complexity and, thus, improve the estimation speed.
+The results on our datasets show that the pose estimation accuracy of the system in 2.2~m visibility is on the same level as in 3, 4, or even 5~m visibility. Thus, we conclude that the system does not need a high number of markers to produce accurate pose estimates. Instead, the number of detected markers can be even decreased to reduce computational complexity and, thus, improve the estimation speed.
 
 From our experiments, we learned that for EKF-based systems, proper configuration is critical for satisfactory pose estimation. The experiment of adding noise to the detection showed that when the correct pixel standard deviation parameter is provided, the system can produce precise pose estimates even in a very turbid environment. However, these parameters are device dependent; finding them is not trivial and requires some experience. 
 
